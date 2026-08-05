@@ -1,0 +1,16 @@
+[
+  {
+    "modid": "glideclient",
+    "name": "Glide Client",
+    "description": "An incremental Forge 1.8.9 port of GlideClient.",
+    "version": "${version}",
+    "mcversion": "${mcversion}",
+    "url": "https://github.com/xiaoyu1738/GlideClient-Forge",
+    "updateUrl": "",
+    "authorList": [],
+    "credits": "Derived from GlideClient under GNU GPLv3.",
+    "logoFile": "assets/minecraft/soar/logo.png",
+    "screenshots": [],
+    "dependencies": []
+  }
+]

@@ -15,16 +15,17 @@ remains with the respective copyright holders.
 
 ## Modifications
 
-This repository contains modifications made beginning in August 2026 to add an
-experimental Minecraft Forge 1.8.9 compatibility path. The changes include
-Forge-aware LaunchWrapper initialization, runtime mapping selection, Forge HUD
-render integration, compatibility handling for selected OptiFine API stubs,
-and separate Forge artifact generation.
+This repository contains modifications made beginning in August 2026 to add a
+Minecraft Forge 1.8.9 port. The changes include a standard Forge mod
+container, an early Forge loading plugin for the remaining Mixins, Forge-aware
+runtime mapping selection, Forge event-based HUD integration, compatibility
+handling for selected OptiFine API stubs, and Forge-only artifact generation.
 
-The project is currently a compatibility port based on GlideClient's custom
-LaunchWrapper architecture. It is not yet a complete or conventional Forge
-mod. Future work intends to migrate the client incrementally to Forge mod
-lifecycle and event APIs.
+The Forge artifact can now be discovered from the normal `mods` directory, but
+the project remains a hybrid port because substantial behavior still depends
+on GlideClient's Mixins and delayed LaunchWrapper bootstrap. Future work will
+continue moving lifecycle and game events to Forge APIs and removing that
+transitional bootstrap.
 
 ## Independence
 

@@ -21,20 +21,19 @@ buildscript {
     }
 }
 
-apply plugin: 'net.minecraftforge.gradle.tweaker-client'
+apply plugin: 'net.minecraftforge.gradle.forge'
 apply plugin: 'org.spongepowered.mixin'
 apply plugin: 'java'
 
-version = "Release"
-group= "me.eldodebug"
-archivesBaseName = "GlideClient"
+version = "7.2-forge.1"
+group = "me.eldodebug"
+archivesBaseName = "GlideClient-Forge"
 
 sourceCompatibility = targetCompatibility = 1.8
 compileJava.options.encoding = 'UTF-8'
 
 minecraft {
-    version = "1.8.9"
-    tweakClass = "me.eldodebug.soar.injection.tweaker.GlideTweaker"
+    version = "1.8.9-11.15.1.2318-1.8.9"
     runDir = "run"
     mappings = "stable_22"
     clientJvmArgs = ["-XX:-DisableExplicitGC"]
@@ -72,16 +71,21 @@ dependencies {
 }
 
 mixin {
-    defaultObfuscationEnv = "notch"
+    defaultObfuscationEnv = "searge"
     add sourceSets.main, "mixins.soar.refmap.json"
 }
 
 processResources {
-    inputs.files "src/main/resources"
-    outputs.dir "build/classes/main"
-    copy {
-        from("src/main/resources")
-        into("build/classes/main")
+    inputs.property "version", project.version
+    inputs.property "mcversion", "1.8.9"
+
+    from(sourceSets.main.resources.srcDirs) {
+        include "mcmod.info"
+        expand "version": project.version, "mcversion": "1.8.9"
+    }
+
+    from(sourceSets.main.resources.srcDirs) {
+        exclude "mcmod.info"
     }
 }
 
@@ -93,51 +97,17 @@ jar {
         }
     }
     exclude 'META-INF/*.RSA', 'META-INF/*.SF', 'META-INF/*.DSA'
-}
-
-jar {
     manifest.attributes(
             "MixinConfigs": 'mixins.soar.json',
-            "TweakClass": 'me.eldodebug.soar.injection.tweaker.GlideTweaker',
-            "TweakOrder": 0,
-            "Manifest-Version": 1.0,
-            'FMLAT': 'soar_at.cfg'
-    )
-
-    configurations.embed.each { dep ->
-        from(project.zipTree(dep)) {
-            exclude 'META-INF', 'META-INF/**'
-        }
-    }
-}
-
-// Forge loads Minecraft classes in SRG names at runtime. Keep a second,
-// pre-reobfuscation archive for Forge profiles so Mixin class descriptors stay
-// in net.minecraft.* form while the searge refmap remaps method/field names.
-task forgeJar(type: Jar, dependsOn: jar) {
-    archiveName = "${archivesBaseName}-${version}-Forge.jar"
-    from {
-        zipTree(jar.archivePath)
-    }
-    exclude 'META-INF/*.RSA', 'META-INF/*.SF', 'META-INF/*.DSA'
-    manifest.attributes(
-            "MixinConfigs": 'mixins.soar.json',
-            "TweakClass": 'me.eldodebug.soar.injection.tweaker.GlideTweaker',
-            "TweakOrder": 0,
-            'FMLAT': 'soar_at.cfg'
+            'FMLAT': 'soar_at.cfg',
+            "FMLCorePlugin": 'me.eldodebug.soar.forge.GlideLoadingPlugin',
+            "FMLCorePluginContainsFMLMod": true,
+            "ModSide": 'CLIENT'
     )
 }
 
 reobf {
-    forgeJar {
+    jar {
         mappingType = 'SEARGE'
     }
 }
-
-reobfForgeJar.doLast {
-    def manifestFile = new File(temporaryDir, 'MANIFEST.MF')
-    forgeJar.manifest.writeTo(manifestFile)
-    ant.jar(destfile: forgeJar.archivePath, update: true, manifest: manifestFile)
-}
-
-reobfJar.mustRunAfter forgeJar

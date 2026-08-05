@@ -2,7 +2,7 @@ package me.eldodebug.soar.utils;
 
 import java.lang.reflect.Field;
 
-import me.eldodebug.soar.injection.tweaker.GlideTweaker;
+import me.eldodebug.soar.forge.ForgeEnvironment;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.settings.GameSettings;
 
@@ -13,7 +13,7 @@ public class OptifineUtils {
     private static final Minecraft mc = Minecraft.getMinecraft();
 
     public static void disableFastRender() {
-        if (GlideTweaker.hasOptifine && mc.gameSettings != null) {
+        if (ForgeEnvironment.isOptifineLoaded() && mc.gameSettings != null) {
             try {
                 Field fastRenderField = getFastRenderField();
                 if (fastRenderField != null) {

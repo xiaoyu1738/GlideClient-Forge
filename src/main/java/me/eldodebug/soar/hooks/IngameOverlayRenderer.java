@@ -1,6 +1,7 @@
 package me.eldodebug.soar.hooks;
 
 import eu.shoroa.contrib.render.ShBlur;
+import me.eldodebug.soar.Glide;
 import me.eldodebug.soar.gui.GuiEditHUD;
 import me.eldodebug.soar.gui.modmenu.GuiModMenu;
 import me.eldodebug.soar.management.event.impl.EventRender2D;
@@ -14,6 +15,10 @@ public final class IngameOverlayRenderer {
     }
 
     public static void render(float partialTicks) {
+        if (Glide.getInstance().getEventManager() == null) {
+            return;
+        }
+
         Minecraft mc = Minecraft.getMinecraft();
 
         ShBlur.getInstance().render();

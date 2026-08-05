@@ -14,7 +14,7 @@ import me.eldodebug.soar.ui.ClickEffects;
 import me.eldodebug.soar.utils.Sound;
 import org.apache.commons.lang3.ArrayUtils;
 
-import me.eldodebug.soar.injection.tweaker.GlideTweaker;
+import me.eldodebug.soar.forge.ForgeEnvironment;
 import me.eldodebug.soar.logger.GlideLogger;
 import me.eldodebug.soar.management.cape.CapeManager;
 import me.eldodebug.soar.management.remote.changelog.ChangelogManager;
@@ -71,6 +71,7 @@ public class Glide {
 	private ClickEffects clickEffects;
 	private BlacklistManager blacklistManager;
 	private RestrictedMod restrictedMod;
+	private boolean starting, started;
 	
 	public Glide() {
 		name = "Glide";
@@ -78,60 +79,81 @@ public class Glide {
 		verIdentifier = 7201;
 	}
 	
-	public void start() {
+	public synchronized void start() {
+		if(starting || started) {
+			return;
+		}
+
+		starting = true;
 		try {
-			OptifineUtils.disableFastRender();
-			this.removeOptifineZoom();
-		} catch(Exception ignored) {}
-		blacklistManager = new BlacklistManager();
-		restrictedMod = new RestrictedMod();
-		try {
-			restrictedMod.shouldCheck = !System.getProperty("me.eldodebug.soar.glideclient.blacklistchecks", "true").equalsIgnoreCase("false");
-		} catch (Exception ignored) {}
-		fileManager = new FileManager();
-		firstLoginFile = new File(fileManager.getCacheDir(), "first.tmp");
-		languageManager = new LanguageManager();
-		eventManager = new EventManager();
-		modManager = new ModManager();
-		
-		modManager.init();
-		
-		capeManager = new CapeManager();
-		colorManager = new ColorManager();
-		profileManager = new ProfileManager();
+			try {
+				OptifineUtils.disableFastRender();
+				this.removeOptifineZoom();
+			} catch(Exception ignored) {}
+			blacklistManager = new BlacklistManager();
+			restrictedMod = new RestrictedMod();
+			try {
+				restrictedMod.shouldCheck = !System.getProperty("me.eldodebug.soar.glideclient.blacklistchecks", "true").equalsIgnoreCase("false");
+			} catch (Exception ignored) {}
+			fileManager = new FileManager();
+			firstLoginFile = new File(fileManager.getCacheDir(), "first.tmp");
+			languageManager = new LanguageManager();
+			eventManager = new EventManager();
+			modManager = new ModManager();
 
-		modMenu = new GuiModMenu();
-		mainMenu = new GuiGlideMainMenu();
-		launchTime = System.currentTimeMillis();
+			modManager.init();
 
-		commandManager = new CommandManager();
-		screenshotManager = new ScreenshotManager();
-		notificationManager = new NotificationManager();
-		securityFeatureManager = new SecurityFeatureManager();
-		quickPlayManager = new QuickPlayManager();
-		changelogManager = new ChangelogManager();
-		newsManager = new NewsManager();
-		discordStats = new DiscordStats();
-		discordStats.check();
-		update = new Update();
-		update.check();
-		waypointManager = new WaypointManager();
+			capeManager = new CapeManager();
+			colorManager = new ColorManager();
+			profileManager = new ProfileManager();
 
-		eventManager.register(new GlideHandler());
+			modMenu = new GuiModMenu();
+			mainMenu = new GuiGlideMainMenu();
+			launchTime = System.currentTimeMillis();
 
-		InternalSettingsMod.getInstance().setToggled(true);
-		clickEffects = new ClickEffects();
-		mc.updateDisplay();
+			commandManager = new CommandManager();
+			screenshotManager = new ScreenshotManager();
+			notificationManager = new NotificationManager();
+			securityFeatureManager = new SecurityFeatureManager();
+			quickPlayManager = new QuickPlayManager();
+			changelogManager = new ChangelogManager();
+			newsManager = new NewsManager();
+			discordStats = new DiscordStats();
+			discordStats.check();
+			update = new Update();
+			update.check();
+			waypointManager = new WaypointManager();
+
+			eventManager.register(new GlideHandler());
+
+			InternalSettingsMod.getInstance().setToggled(true);
+			clickEffects = new ClickEffects();
+			mc.updateDisplay();
+			started = true;
+		} finally {
+			starting = false;
+		}
 	}
 	
-	public void stop() {
-		profileManager.save();
+	public synchronized void stop() {
+		if(!started) {
+			return;
+		}
+
+		started = false;
+		if(profileManager != null) {
+			profileManager.save();
+		}
 		Sound.play("soar/audio/close.wav", true);
 
 	}
+
+	public synchronized boolean isStarted() {
+		return started;
+	}
 	
 	private void removeOptifineZoom() {
-		if(GlideTweaker.hasOptifine) {
+		if(ForgeEnvironment.isOptifineLoaded()) {
 			try {
 				this.unregisterKeybind((KeyBinding) GameSettings.class.getField("ofKeyBindZoom").get(mc.gameSettings));
 			} catch(Exception e) {

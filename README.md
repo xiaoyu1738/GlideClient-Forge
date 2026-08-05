@@ -1,50 +1,47 @@
 # GlideClient Forge
 
-An experimental Forge 1.8.9 compatibility project derived from
+An independent Forge 1.8.9 port derived from
 [GlideClient](https://github.com/GlideClient/client).
 
-This repository currently adapts GlideClient's existing LaunchWrapper and
-Mixin architecture so it can coexist with Minecraft Forge 1.8.9. It is not yet
-a conventional Forge mod. The longer-term goal is to move GlideClient into a
-normal Forge mod structure and reduce its dependence on a custom version JSON,
-custom tweak ordering, and classpath replacement logic.
+This project targets Forge only. The final build is one client-side mod JAR
+for Minecraft 1.8.9; there is no Vanilla LaunchWrapper artifact or custom
+launcher JSON in this repository. Mixins remain an implementation detail for
+features that have not yet been moved to Forge events and APIs.
 
 ## Project Status
 
-The current compatibility build can start with:
+The current Forge mod build targets:
 
 - Minecraft 1.8.9
 - Forge 11.15.1.2318
 - OptiFine 1.8.9 HD U M6 pre2
 - Java 8
 
-The Forge path has been tested on Windows 11. The original vanilla
-LaunchWrapper path remains in the codebase, but it has not yet been fully
-regression-tested after the Forge compatibility work.
+The drop-in Forge bootstrap has been structurally validated and builds
+successfully. Runtime testing with OptiFine and other coremods is still ongoing.
 
 This is an independent community project. It is not an official GlideClient,
 Minecraft, Forge, or OptiFine release.
 
 ## Current Compatibility Work
 
+- Provides a Forge `IFMLLoadingPlugin` and regular `@Mod` lifecycle entry point.
+- Loads directly from the normal Forge `mods` directory.
 - Detects Forge launches and defers Glide's Mixin bootstrap until Forge has
   installed its runtime deobfuscation transformer.
-- Uses the `notch` obfuscation context for vanilla and `searge` for Forge.
-- Produces separate vanilla and Forge artifacts.
-- Bridges Glide's 2D HUD events into Forge's `GuiIngameForge` render path.
-- Preserves legacy Glide tweaker class names for existing launcher profiles.
+- Uses the Forge `searge` obfuscation context.
+- Bridges Glide's 2D HUD events from Forge's `RenderGameOverlayEvent` into the
+  existing internal event bus.
 - Works around conflicting OptiFine Forge API stubs and Vecmath class loading.
-- Avoids duplicate LaunchWrapper arguments when FML owns the launch process.
 
 ## Roadmap
 
-1. Stabilize Forge 1.8.9 startup, rendering, input, and OptiFine coexistence.
-2. Add automated checks for vanilla and Forge artifact structure.
-3. Introduce a standard Forge mod entry point and lifecycle.
-4. Move suitable event hooks from the custom event bus to Forge events.
-5. Reduce classpath transformers and version-JSON-specific bootstrap logic.
-6. Package GlideClient as a normal Forge mod while preserving user data and
-   module behavior where practical.
+1. Stabilize the drop-in Forge mod bootstrap with OptiFine and other coremods.
+2. Move input, tick, connection, and remaining render hooks to Forge events.
+3. Move Glide startup and shutdown ownership into the Forge lifecycle.
+4. Reduce and eventually remove classpath transformers as equivalent Forge APIs
+   become available.
+5. Add runtime smoke tests and artifact-structure checks to CI.
 
 The migration will be incremental. Replacing all Mixins at once would create a
 large regression surface across rendering, GUI, networking, and performance
@@ -61,19 +58,28 @@ modules.
 The Gradle wrapper is included. On Linux or macOS:
 
 ```bash
-./gradlew clean build reobfForgeJar --console=plain
+./gradlew clean build --console=plain
 ```
 
 On Windows:
 
 ```bat
-gradlew.bat clean build reobfForgeJar --console=plain
+gradlew.bat clean build --console=plain
 ```
 
-Build artifacts are written to `build/libs/`:
+The build writes one artifact to `build/libs/`:
 
-- `GlideClient-Release.jar`: vanilla LaunchWrapper artifact
-- `GlideClient-Release-Forge.jar`: Forge SRG-reobfuscated artifact
+- `GlideClient-Forge-7.2-forge.1.jar`
+
+## Installing The Forge Build
+
+1. Install Minecraft Forge `1.8.9-11.15.1.2318`.
+2. Put `GlideClient-Forge-7.2-forge.1.jar` in the instance's `mods` directory.
+3. Start the normal Forge 1.8.9 profile.
+
+The Forge artifact contains both the early coremod bootstrap required by the
+remaining Mixins and the regular `glideclient` Forge mod container. It is
+client-only and does not need to be installed on a server.
 
 For an IntelliJ development workspace:
 
@@ -87,17 +93,14 @@ project; newer Java runtimes are not supported by the current build.
 
 ## Launch Architecture
 
-The current Forge build is still loaded as a LaunchWrapper tweaker. A Forge
-profile must start FML before Glide:
+Forge discovers `GlideLoadingPlugin` from the Forge JAR manifest. The plugin
+installs the OptiFine compatibility transformer and queues Glide's Mixin setup
+after Forge's runtime deobfuscation transformer. Forge then discovers
+`GlideForgeMod` through normal `@Mod` scanning and registers the event bridge.
 
-```text
---tweakClass net.minecraftforge.fml.common.launcher.FMLTweaker
---tweakClass me.eldodebug.soar.injection.tweaker.GlideTweaker
-```
-
-Glide then waits for Forge's deobfuscation transformer before registering its
-Mixin configuration. This bootstrap is transitional and is expected to be
-replaced as the Forge mod port progresses.
+This is a transitional port: installation and lifecycle discovery use Forge,
+while many game hooks still use Mixin. All supported launches use this Forge
+mod path.
 
 ## Upstream and Attribution
 
@@ -114,7 +117,7 @@ notice.
 
 ## Contributing
 
-Keep changes focused and test both output artifacts when touching shared Mixin,
+Keep changes focused and test the Forge artifact when touching shared Mixin,
 rendering, or bootstrap code. Bug reports should include the Minecraft, Forge,
 OptiFine, Java, and operating system versions together with the first relevant
 exception from the log.

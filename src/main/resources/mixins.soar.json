@@ -38,7 +38,6 @@
     "gui.MixinGuiDownloadTerrain",
     "gui.MixinGuiGameOver",
     "gui.MixinGuiIngame",
-    "gui.MixinGuiIngameForge",
     "gui.MixinGuiIngameMenu",
     "gui.MixinGuiLanguage",
     "gui.MixinGuiMultiplayer",

@@ -21,14 +21,12 @@ jobs:
         java-version: 8
         cache: "gradle"
 
-    - name: Build vanilla and Forge artifacts
-      run: chmod +x ./gradlew && ./gradlew clean build reobfForgeJar --console=plain
+    - name: Build Forge mod
+      run: chmod +x ./gradlew && ./gradlew clean build --console=plain
 
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: GlideClient
-        path: |
-          build/libs/GlideClient-Release.jar
-          build/libs/GlideClient-Release-Forge.jar
+        name: GlideClient-Forge
+        path: build/libs/GlideClient-Forge-*.jar
         if-no-files-found: error

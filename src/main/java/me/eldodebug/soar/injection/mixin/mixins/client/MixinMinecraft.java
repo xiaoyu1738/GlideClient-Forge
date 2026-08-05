@@ -12,7 +12,6 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.gen.Accessor;
-import org.spongepowered.asm.mixin.gen.Invoker;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyArg;
@@ -25,10 +24,7 @@ import me.eldodebug.soar.injection.interfaces.IMixinEntityLivingBase;
 import me.eldodebug.soar.injection.interfaces.IMixinMinecraft;
 import me.eldodebug.soar.management.event.impl.EventClickMouse;
 import me.eldodebug.soar.management.event.impl.EventKey;
-import me.eldodebug.soar.management.event.impl.EventPreRenderTick;
-import me.eldodebug.soar.management.event.impl.EventRenderTick;
 import me.eldodebug.soar.management.event.impl.EventScrollMouse;
-import me.eldodebug.soar.management.event.impl.EventTick;
 import me.eldodebug.soar.management.event.impl.EventToggleFullscreen;
 import me.eldodebug.soar.management.event.impl.EventUpdateDisplay;
 import me.eldodebug.soar.management.event.impl.EventUpdateFramebufferSize;
@@ -127,11 +123,6 @@ public abstract class MixinMinecraft implements IMixinMinecraft {
 
 	@Shadow protected abstract void resize(int width, int height);
 
-	@Inject(method = "startGame", at = @At(value = "FIELD", target = "Lnet/minecraft/client/Minecraft;ingameGUI:Lnet/minecraft/client/gui/GuiIngame;", shift = At.Shift.AFTER))
-    public void preStartGame(CallbackInfo ci) {
-    	Glide.getInstance().start();
-    }
-    
 	@Redirect(method = "runTick", at = @At(value = "INVOKE", target = "Lorg/lwjgl/input/Mouse;next()Z"))
 	public boolean nextMouse() {
 		
@@ -215,11 +206,6 @@ public abstract class MixinMinecraft implements IMixinMinecraft {
 		}
 	}
 	
-    @Inject(method = "runTick", at = @At("TAIL"))
-    private void onTick(final CallbackInfo ci) {
-    	new EventTick().call();
-    }
-    
     @Inject(method = "sendClickBlockToController", at = @At("HEAD"))
     public void preSendClickBlockToController(boolean leftClick, CallbackInfo ci) {
     	
@@ -278,16 +264,6 @@ public abstract class MixinMinecraft implements IMixinMinecraft {
 		}
 
 		return dWheel;
-	}
-	
-	@Inject(method = "runGameLoop", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/achievement/GuiAchievement;updateAchievementWindow()V", shift = At.Shift.BEFORE))
-	public void preRenderTick(CallbackInfo ci) {
-		new EventPreRenderTick().call();
-	}
-	
-	@Inject(method = "runGameLoop", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/achievement/GuiAchievement;updateAchievementWindow()V", shift = At.Shift.AFTER))
-	public void postRenderTick(CallbackInfo ci) {
-		new EventRenderTick().call();
 	}
 	
 	@Overwrite
