@@ -6,10 +6,10 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-@Mixin(targets = "org.lwjgl.opengl.WindowsDisplay")
+@Mixin(targets = "org.lwjgl.opengl.WindowsDisplay", remap = false)
 public abstract class MixinWindowsDisplay {
 
-    @Shadow
+    @Shadow(remap = false)
     protected abstract void handleMouseButton(int button, int state, long millis);
     
     @Inject(method = "doHandleMessage", at = @At("HEAD"), cancellable = true, remap = false)

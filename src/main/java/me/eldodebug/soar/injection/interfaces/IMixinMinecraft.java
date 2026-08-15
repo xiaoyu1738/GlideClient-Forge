@@ -6,12 +6,13 @@ import net.minecraft.util.Session;
 import net.minecraft.util.Timer;
 
 public interface IMixinMinecraft {
-	boolean isRunning();
-	Timer getTimer();
-	void setSession(Session session);
-	void callClickMouse();
-	void callRightClickMouse();
-	DefaultResourcePack getMcDefaultResourcePack();
-    void resizeWindow(int width, int height);
-    Entity getRenderViewEntity();
+	boolean glide$isRunning();
+	Timer glide$getTimer();
+	void glide$setSession(Session session);
+	void glide$callClickMouse();
+	void glide$callRightClickMouse();
+	void glide$setLeftClickCounter(int value);
+	DefaultResourcePack glide$getMcDefaultResourcePack();
+    void glide$resizeWindow(int width, int height);
+    Entity glide$getRenderViewEntity();
 }

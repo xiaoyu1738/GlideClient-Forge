@@ -30,8 +30,8 @@ public final class RenderGlobalHelper {
     public void switchTo() {
         if (orig == null)
             orig = mc.renderGlobal;
-        if (((IMixinRenderGlobal)orig).getWorldClient() != ((IMixinRenderGlobal)rg).getWorldClient()) {
-            rg.setWorldAndLoadRenderers(((IMixinRenderGlobal)orig).getWorldClient());
+        if (((IMixinRenderGlobal)orig).glide$getWorldClient() != ((IMixinRenderGlobal)rg).glide$getWorldClient()) {
+            rg.setWorldAndLoadRenderers(((IMixinRenderGlobal)orig).glide$getWorldClient());
             getSettings();
         } else if (settingsChanged()) {
             rg.loadRenderers();

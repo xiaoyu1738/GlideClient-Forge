@@ -103,7 +103,7 @@ public class SmoothCapeRenderer {
     
     private void modifyPoseStackSimulation(CustomCapeRenderLayer layer, PoseStack poseStack, AbstractClientPlayer abstractClientPlayer, float delta, int part) {
     	
-        StickSimulation simulation = ((IMixinEntityPlayer)abstractClientPlayer).getSimulation();
+        StickSimulation simulation = ((IMixinEntityPlayer)abstractClientPlayer).glide$getSimulation();
         poseStack.pushPose();
         poseStack.translate(0.0D, 0.0D, 0.125D);
         

@@ -1,6 +1,5 @@
 package me.eldodebug.soar.injection.mixin.mixins.client;
 
-import com.google.common.collect.Maps;
 import net.minecraft.client.resources.IResourcePack;
 import net.minecraft.client.resources.Language;
 import net.minecraft.client.resources.LanguageManager;
@@ -16,7 +15,7 @@ import java.util.Map;
 @Mixin(LanguageManager.class)
 public abstract class MixinLanguageManager {
 
-    @Shadow private Map<String, Language> languageMap = Maps.newHashMap();
+    @Shadow private Map<String, Language> languageMap;
 
 
     @Inject(method = "parseLanguageMetadata", at = @At("RETURN"))

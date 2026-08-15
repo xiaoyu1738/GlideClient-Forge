@@ -13,23 +13,19 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import me.eldodebug.soar.injection.interfaces.IMixinMinecraft;
-import me.eldodebug.soar.management.event.impl.EventBlockHighlightRender;
 import me.eldodebug.soar.management.event.impl.EventCameraRotation;
 import me.eldodebug.soar.management.event.impl.EventGamma;
 import me.eldodebug.soar.management.event.impl.EventHurtCamera;
 import me.eldodebug.soar.management.event.impl.EventPlayerHeadRotation;
-import me.eldodebug.soar.management.event.impl.EventRender3D;
 import me.eldodebug.soar.management.event.impl.EventShader;
 import me.eldodebug.soar.management.event.impl.EventZoomFov;
 import me.eldodebug.soar.management.language.TranslateText;
 import me.eldodebug.soar.management.mods.impl.EntityCullingMod;
 import me.eldodebug.soar.management.mods.impl.MinimalViewBobbingMod;
-import me.eldodebug.soar.management.mods.impl.MoBendsMod;
 import me.eldodebug.soar.management.mods.impl.AnimationsMod;
 import me.eldodebug.soar.management.mods.impl.WeatherChangerMod;
 import me.eldodebug.soar.management.mods.settings.impl.ComboSetting;
 import me.eldodebug.soar.management.mods.settings.impl.combo.Option;
-import net.minecraft.block.material.Material;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.EntityPlayerSP;
 import net.minecraft.client.renderer.EntityRenderer;
@@ -44,9 +40,6 @@ public abstract class MixinEntityRenderer {
     @Shadow
     public abstract void setupViewBobbing(float partialTicks);
     
-	@Shadow
-	protected abstract boolean isDrawBlockOutline();
-	
     @Final
     @Unique
     private final Minecraft mc = Minecraft.getMinecraft();
@@ -71,11 +64,6 @@ public abstract class MixinEntityRenderer {
 	@Shadow
     private float thirdPersonDistance;
 	
-    @Inject(method = "renderWorldPass", at = @At(value = "FIELD", target = "Lnet/minecraft/client/renderer/EntityRenderer;renderHand:Z", shift = At.Shift.BEFORE))
-    private void onRender3D(int pass, float partialTicks, long finishTimeNano, CallbackInfo ci) {
-    	new EventRender3D(partialTicks).call();
-    }
-    
 	@Redirect(method = "updateCameraAndRender", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/entity/EntityPlayerSP;setAngles(FF)V"))
 	public void updateCameraAndRender(EntityPlayerSP entityPlayerSP, float yaw, float pitch) {
 		
@@ -88,16 +76,6 @@ public abstract class MixinEntityRenderer {
 		if(!event.isCancelled()) {
 			entityPlayerSP.setAngles(yaw, pitch);
 		}
-	}
-	
-	@Inject(method = "updateCameraAndRender", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/GuiScreen;drawScreen(IIF)V", shift = At.Shift.BEFORE))
-	public void renderingBefore(float partialTicks, long nanoTime, CallbackInfo ci) {
-		MoBendsMod.getInstance().setRenderingGuiScreen(true);
-	}
-	
-	@Inject(method = "updateCameraAndRender", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/GuiScreen;drawScreen(IIF)V", shift = At.Shift.AFTER))
-	public void renderingAfter(float partialTicks, long nanoTime, CallbackInfo ci) {
-		MoBendsMod.getInstance().setRenderingGuiScreen(false);
 	}
 	
     @Inject(method = "renderWorldPass", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/RenderGlobal;renderEntities(Lnet/minecraft/entity/Entity;Lnet/minecraft/client/renderer/culling/ICamera;F)V"))
@@ -211,7 +189,7 @@ public abstract class MixinEntityRenderer {
 			GlStateManager.matrixMode(5890);
 			GlStateManager.pushMatrix();
 			GlStateManager.loadIdentity();
-			group.loadShaderGroup(((IMixinMinecraft)mc).getTimer().renderPartialTicks);
+			group.loadShaderGroup(((IMixinMinecraft)mc).glide$getTimer().renderPartialTicks);
 			GlStateManager.popMatrix();
 		}
 	}
@@ -232,43 +210,6 @@ public abstract class MixinEntityRenderer {
 		event.call();
 		
 		cir.setReturnValue(event.getFov());
-	}
-	
-	@Redirect(method = "renderWorldPass", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/EntityRenderer;isDrawBlockOutline()Z"))
-	public boolean overrideCanDraw(EntityRenderer renderer) {
-		return true;
-	}
-	
-	@Redirect(method = "renderWorldPass", at = @At(value = "INVOKE", target = "Lnet/minecraft/entity/Entity;isInsideOfMaterial(Lnet/minecraft/block/material/Material;)Z", ordinal = 0))
-	public boolean overrideWetBlockHighlight(Entity entity, Material materialIn) {
-		
-		boolean maybeWould = entity.isInsideOfMaterial(materialIn);
-		boolean would = maybeWould && isDrawBlockOutline();
-		
-		EventBlockHighlightRender event = new EventBlockHighlightRender(mc.objectMouseOver, ((IMixinMinecraft)mc).getTimer().renderPartialTicks);
-		event.call();
-		
-		if(maybeWould && event.isCancelled()) {
-			return false;
-		}
-		
-		return would;
-	}
-
-	@Redirect(method = "renderWorldPass", at = @At(value = "INVOKE", target = "Lnet/minecraft/entity/Entity;isInsideOfMaterial(Lnet/minecraft/block/material/Material;)Z", ordinal = 1))
-	public boolean overrideBlockHighlight(Entity entity, Material materialIn) {
-		
-		boolean totallyWouldNot = entity.isInsideOfMaterial(materialIn);
-		boolean wouldNot = totallyWouldNot || !isDrawBlockOutline();
-		
-		EventBlockHighlightRender event = new EventBlockHighlightRender(mc.objectMouseOver, ((IMixinMinecraft)mc).getTimer().renderPartialTicks);
-		event.call();
-		
-		if(!totallyWouldNot && event.isCancelled()) {
-			return true;
-		}
-		
-		return wouldNot;
 	}
 	
 	@Redirect(method = "orientCamera", at = @At(value = "FIELD", target = "Lnet/minecraft/entity/Entity;rotationYaw:F"))

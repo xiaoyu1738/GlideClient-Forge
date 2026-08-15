@@ -4,12 +4,10 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import me.eldodebug.soar.injection.interfaces.IMixinEntityPlayer;
 import me.eldodebug.soar.injection.interfaces.IMixinRenderPlayer;
-import me.eldodebug.soar.management.event.impl.EventRenderPlayer;
 import me.eldodebug.soar.management.mods.impl.Skin3DMod;
 import me.eldodebug.soar.management.mods.impl.skin3d.layers.BodyLayerFeatureRenderer;
 import me.eldodebug.soar.management.mods.impl.skin3d.layers.HeadLayerFeatureRenderer;
@@ -71,17 +69,6 @@ public abstract class MixinRenderPlayer  extends RendererLivingEntity<AbstractCl
     	}
     }
     
-	@Inject(method = "doRender", at = @At("HEAD"), cancellable = true)
-    public void preDoRender(AbstractClientPlayer entity, double x, double y, double z, float entityYaw, float partialTicks, CallbackInfo ci) {
-		
-		EventRenderPlayer event = new EventRenderPlayer(entity, x, y, z, partialTicks);
-		event.call();
-		
-		if(event.isCancelled()) {
-			ci.cancel();
-		}
-	}
-	
     @Inject(method = "renderRightArm", at = @At("RETURN"))
     public void renderRightArm(AbstractClientPlayer player, CallbackInfo info) {
     	if(Skin3DMod.getInstance().isToggled()) {
@@ -101,7 +88,7 @@ public abstract class MixinRenderPlayer  extends RendererLivingEntity<AbstractCl
         ModelPlayer modelplayer = (ModelPlayer) getMainModel();
         float pixelScaling = Skin3DMod.getInstance().getBaseVoxelSize();
         
-        if(settings.getSkinLayers() == null && !setupModel(player, settings)) {
+        if(settings.glide$getSkinLayers() == null && !setupModel(player, settings)) {
             return;
         }
         
@@ -111,12 +98,12 @@ public abstract class MixinRenderPlayer  extends RendererLivingEntity<AbstractCl
         GlStateManager.scale(pixelScaling, pixelScaling, pixelScaling);
         
         if(!smallArms) {
-            settings.getSkinLayers()[layerId].x = -0.998f*16f;
+            settings.glide$getSkinLayers()[layerId].x = -0.998f*16f;
         } else {
-            settings.getSkinLayers()[layerId].x = -0.499f*16;
+            settings.glide$getSkinLayers()[layerId].x = -0.499f*16;
         }
         
-        settings.getSkinLayers()[layerId].render(false);
+        settings.glide$getSkinLayers()[layerId].render(false);
         
         GlStateManager.popMatrix();
     }
@@ -132,23 +119,24 @@ public abstract class MixinRenderPlayer  extends RendererLivingEntity<AbstractCl
         return true;
     }
     
-    @Redirect(method = "renderRightArm", at = @At(value = "FIELD", target = "Lnet/minecraft/client/model/ModelPlayer;isSneak:Z", ordinal = 0))
-    private void resetArmState(ModelPlayer modelPlayer, boolean value) {
+    @Inject(method = "renderRightArm", at = @At("HEAD"))
+    private void resetArmState(AbstractClientPlayer player, CallbackInfo info) {
+        ModelPlayer modelPlayer = (ModelPlayer) getMainModel();
         modelPlayer.isRiding = modelPlayer.isSneak = false;
     }
     
     @Override
-    public HeadLayerFeatureRenderer getHeadLayer() {
+    public HeadLayerFeatureRenderer glide$getHeadLayer() {
         return headLayer;
     }
 
     @Override
-    public BodyLayerFeatureRenderer getBodyLayer() {
+    public BodyLayerFeatureRenderer glide$getBodyLayer() {
         return bodyLayer;
     }
 
     @Override
-    public boolean hasThinArms() {
+    public boolean glide$hasThinArms() {
         return smallArms;
     }
 }

@@ -60,10 +60,10 @@ public class PlayerPredicatorMod extends Mod {
             S14PacketEntity s14PacketEntity = ((S14PacketEntity) packet);
             IMixinS14PacketEntity iS14PacketEntity = (IMixinS14PacketEntity) s14PacketEntity;
             
-            if (iS14PacketEntity.getEntityId() == target.getEntityId()) {
-                realTargetPosition.x += iS14PacketEntity.getPosX() / 32D;
-                realTargetPosition.y += iS14PacketEntity.getPosY() / 32D;
-                realTargetPosition.z += iS14PacketEntity.getPosZ() / 32D;
+            if (iS14PacketEntity.glide$getEntityId() == target.getEntityId()) {
+                realTargetPosition.x += iS14PacketEntity.glide$getPosX() / 32D;
+                realTargetPosition.y += iS14PacketEntity.glide$getPosY() / 32D;
+                realTargetPosition.z += iS14PacketEntity.glide$getPosZ() / 32D;
             }
 		} else if(packet instanceof S18PacketEntityTeleport) {
 			

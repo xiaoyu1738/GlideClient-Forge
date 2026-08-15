@@ -10,16 +10,16 @@ import net.minecraft.util.MathHelper;
 
 public interface IMixinEntityPlayer {
 	
-	public CustomizableModelPart getHeadLayers();
-	public void setupHeadLayers(CustomizableModelPart box);
-	public CustomizableModelPart[] getSkinLayers();
-	public void setupSkinLayers(CustomizableModelPart[] box);
+	public CustomizableModelPart glide$getHeadLayers();
+	public void glide$setupHeadLayers(CustomizableModelPart box);
+	public CustomizableModelPart[] glide$getSkinLayers();
+	public void glide$setupSkinLayers(CustomizableModelPart[] box);
 	
-    public StickSimulation getSimulation();
+    public StickSimulation glide$getSimulation();
     
-    public default void updateSimulation(EntityPlayer abstractClientPlayer, int partCount) {
+    public default void glide$updateSimulation(EntityPlayer abstractClientPlayer, int partCount) {
     	
-        StickSimulation simulation = getSimulation();
+        StickSimulation simulation = glide$getSimulation();
         boolean dirty = false;
         
         if(simulation.points.size() != partCount) {
@@ -41,14 +41,14 @@ public interface IMixinEntityPlayer {
         
         if(dirty) {
             for(int i = 0; i < 10; i++) {
-                simulate(abstractClientPlayer);
+                glide$simulate(abstractClientPlayer);
             }
         }
     }
     
-    public default void simulate(EntityPlayer abstractClientPlayer) {
+    public default void glide$simulate(EntityPlayer abstractClientPlayer) {
     	
-        StickSimulation simulation = getSimulation();
+        StickSimulation simulation = glide$getSimulation();
         
         if(simulation.points.isEmpty()) {
             return;

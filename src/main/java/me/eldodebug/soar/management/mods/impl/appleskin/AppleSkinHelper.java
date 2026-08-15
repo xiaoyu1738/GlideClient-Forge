@@ -24,7 +24,7 @@ public class AppleSkinHelper {
         final ItemFood food = (ItemFood) stack.getItem();
 
         if (food.getPotionEffect(stack) != null) {
-            return Potion.potionTypes[((IMixinItemFood)food).getPotionID()].isBadEffect();
+            return Potion.potionTypes[((IMixinItemFood)food).glide$getPotionID()].isBadEffect();
         }
 
         return false;

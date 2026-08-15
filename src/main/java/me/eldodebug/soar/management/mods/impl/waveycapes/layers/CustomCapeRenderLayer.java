@@ -55,7 +55,7 @@ public class CustomCapeRenderLayer implements LayerRenderer<AbstractClientPlayer
         
         if(movementSetting.getOption().getTranslate().equals(TranslateText.BASIC)) {
         	IMixinEntityPlayer holder = (IMixinEntityPlayer) abstractClientPlayer;
-            holder.updateSimulation(abstractClientPlayer, partCount);
+            holder.glide$updateSimulation(abstractClientPlayer, partCount);
         }
         
         this.playerRenderer.bindTexture(abstractClientPlayer.getLocationCape());
@@ -89,7 +89,7 @@ public class CustomCapeRenderLayer implements LayerRenderer<AbstractClientPlayer
     
     private void modifyPoseStackSimulation(AbstractClientPlayer abstractClientPlayer, float delta, int part) {
     	
-        StickSimulation simulation = ((IMixinEntityPlayer)abstractClientPlayer).getSimulation();
+        StickSimulation simulation = ((IMixinEntityPlayer)abstractClientPlayer).glide$getSimulation();
         GlStateManager.translate(0.0D, 0.0D, 0.125D);
         
         float z = simulation.points.get(part).getLerpX(delta) - simulation.points.get(0).getLerpX(delta);

@@ -8,8 +8,8 @@ import org.lwjgl.opengl.GL11;
 
 import me.eldodebug.soar.injection.interfaces.IMixinShaderGroup;
 import me.eldodebug.soar.management.event.EventTarget;
+import me.eldodebug.soar.management.event.impl.EventRenderTick;
 import me.eldodebug.soar.management.event.impl.EventShader;
-import me.eldodebug.soar.management.event.impl.EventUpdateDisplay;
 import me.eldodebug.soar.management.language.TranslateText;
 import me.eldodebug.soar.management.mods.Mod;
 import me.eldodebug.soar.management.mods.ModCategory;
@@ -69,7 +69,7 @@ public class MotionBlurMod extends Mod {
 			
 			if(groupBlur != amountSetting.getValueFloat() || !loaded) {
 				loaded = true;
-				((IMixinShaderGroup) group).getListShaders().forEach((shader) -> {
+				((IMixinShaderGroup) group).glide$getListShaders().forEach((shader) -> {
 					ShaderUniform factor = shader.getShaderManager().getShaderUniform("BlurFactor");
 					if(factor != null) {
 						factor.set(amountSetting.getValueFloat());
@@ -83,7 +83,7 @@ public class MotionBlurMod extends Mod {
 	}
 	
 	@EventTarget
-	public void onUpdateDisplay(EventUpdateDisplay event) {
+	public void onRenderTick(EventRenderTick event) {
 		
 		if(typeSetting.getOption().getTranslate().equals(TranslateText.ACCUM)) {
 			

@@ -43,17 +43,17 @@ public abstract class MixinRenderManager implements IMixinRenderManager {
 	}
 	
 	@Override
-	public double getRenderPosX() {
+	public double glide$getRenderPosX() {
 		return this.renderPosX;
 	}
 
 	@Override
-	public double getRenderPosY() {
+	public double glide$getRenderPosY() {
 		return this.renderPosY;
 	}
 
 	@Override
-	public double getRenderPosZ() {
+	public double glide$getRenderPosZ() {
 		return this.renderPosZ;
 	}
 }

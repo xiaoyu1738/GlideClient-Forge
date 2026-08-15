@@ -86,7 +86,7 @@ public class PackDisplayMod extends HUDMod {
 			dynamicTexture = new DynamicTexture(getCurrentPack().getPackImage());
 		} catch (Exception e) {
 			try {
-				dynamicTexture = new DynamicTexture(((IMixinMinecraft)mc).getMcDefaultResourcePack().getPackImage());
+				dynamicTexture = new DynamicTexture(((IMixinMinecraft)mc).glide$getMcDefaultResourcePack().getPackImage());
 			} catch (IOException e1) {
 				dynamicTexture = TextureUtil.missingTexture;
 			}
@@ -100,6 +100,6 @@ public class PackDisplayMod extends HUDMod {
 			final IResourcePack last = packs.get(packs.size() - 1).getResourcePack();
 			return last;
 		}
-		return ((IMixinMinecraft)mc).getMcDefaultResourcePack();
+		return ((IMixinMinecraft)mc).glide$getMcDefaultResourcePack();
 	}
 }

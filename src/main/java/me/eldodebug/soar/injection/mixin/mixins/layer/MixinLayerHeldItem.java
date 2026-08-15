@@ -3,8 +3,10 @@ package me.eldodebug.soar.injection.mixin.mixins.layer;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Mutable;
-import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import me.eldodebug.soar.management.mods.impl.AnimationsMod;
 import me.eldodebug.soar.management.mods.settings.impl.BooleanSetting;
@@ -36,10 +38,14 @@ public abstract class MixinLayerHeldItem {
         this.livingEntityRenderer = rendererLivingEntity;
     }
 
-    @Overwrite
-    public void doRenderLayer(EntityLivingBase entitylivingbaseIn, float f, float g, float partialTicks, float h, float i, float j, float scale) {
+	@Inject(method = "doRenderLayer", at = @At("HEAD"), cancellable = true)
+    private void glide$renderHeldItem(EntityLivingBase entitylivingbaseIn, float f, float g, float partialTicks, float h, float i, float j, float scale, CallbackInfo ci) {
     	
     	AnimationsMod mod = AnimationsMod.getInstance();
+		if (!mod.isToggled()) {
+			return;
+		}
+
     	BooleanSetting sneak = mod.getSneakSetting();
         ItemStack itemStack = entitylivingbaseIn.getHeldItem();
         
@@ -103,5 +109,7 @@ public abstract class MixinLayerHeldItem {
             
             GlStateManager.popMatrix();
         }
+
+		ci.cancel();
     }
 }

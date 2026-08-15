@@ -4,8 +4,12 @@ import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.ClassNode;
+import org.objectweb.asm.tree.FrameNode;
 import org.objectweb.asm.tree.InsnList;
 import org.objectweb.asm.tree.InsnNode;
+import org.objectweb.asm.tree.JumpInsnNode;
+import org.objectweb.asm.tree.LabelNode;
+import org.objectweb.asm.tree.LdcInsnNode;
 import org.objectweb.asm.tree.MethodInsnNode;
 import org.objectweb.asm.tree.MethodNode;
 import org.objectweb.asm.tree.TypeInsnNode;
@@ -28,9 +32,17 @@ public class LwjglTransformer implements IClassTransformer {
             return null;
         }
 
+        if (name == null
+                || name.startsWith("me.eldodebug.soar.internal.asm.")
+                || name.startsWith("me.eldodebug.soar.injection.transformer.")) {
+            return basicClass;
+        }
+
         if (REGISTRY_DELEGATE.equals(transformedName)) {
             return normalizeRegistryDelegate(basicClass);
         }
+
+        basicClass = bridgeNanoVgClassLoaderBoundary(name, basicClass);
 
         if (name.equals("org.lwjgl.nanovg.NanoVGGLConfig")) {
             ClassReader reader = new ClassReader(basicClass);
@@ -69,7 +81,93 @@ public class LwjglTransformer implements IClassTransformer {
             node.accept(cw);
             return cw.toByteArray();
         }
+
+        // lwjgl-soar bundles the LWJGL 3 system package alongside Minecraft's
+        // sealed LWJGL 2 root package. The loader only uses Version.getVersion
+        // for a temporary extraction directory and the root-package class is
+        // intentionally omitted from the Forge jar to avoid package sealing.
+        if (name.equals("org.lwjgl.system.SharedLibraryLoader")
+                || name.equals("org.lwjgl.system.Library")) {
+            ClassNode node = new ClassNode();
+            new ClassReader(basicClass).accept(node, ClassReader.EXPAND_FRAMES);
+            boolean changed = false;
+            for (MethodNode method : node.methods) {
+                for (org.objectweb.asm.tree.AbstractInsnNode instruction = method.instructions.getFirst();
+                        instruction != null; instruction = instruction.getNext()) {
+                    if (instruction instanceof MethodInsnNode) {
+                        MethodInsnNode invoke = (MethodInsnNode) instruction;
+                        if (invoke.getOpcode() == Opcodes.INVOKESTATIC
+                                && "org/lwjgl/Version".equals(invoke.owner)
+                                && "getVersion".equals(invoke.name)
+                                && "()Ljava/lang/String;".equals(invoke.desc)) {
+                            method.instructions.set(instruction, new LdcInsnNode("3.3.1"));
+                            changed = true;
+                        }
+                    }
+                }
+            }
+            if (changed) {
+                ClassWriter writer = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
+                node.accept(writer);
+                return writer.toByteArray();
+            }
+        }
         return basicClass;
+    }
+
+    private byte[] bridgeNanoVgClassLoaderBoundary(String name, byte[] basicClass) {
+        ClassNode node = new ClassNode();
+        new ClassReader(basicClass).accept(node, 0);
+
+        if ((node.access & Opcodes.ACC_INTERFACE) != 0
+                && name != null && !name.startsWith("me.eldodebug.soar.")) {
+            for (MethodNode method : node.methods) {
+                LwjglClassLoadingBridge.registerDescriptor(method.desc);
+            }
+        }
+
+        boolean changed = false;
+        for (MethodNode method : node.methods) {
+            if ("loadClass".equals(method.name)
+                    && "(Ljava/lang/String;Z)Ljava/lang/Class;".equals(method.desc)
+                    && (method.access & (Opcodes.ACC_ABSTRACT | Opcodes.ACC_NATIVE)) == 0) {
+                LabelNode useLocalLoader = new LabelNode();
+                InsnList bridge = new InsnList();
+                bridge.add(new LdcInsnNode(LwjglClassLoadingBridge.PROPERTY_PREFIX));
+                bridge.add(new VarInsnNode(Opcodes.ALOAD, 1));
+                bridge.add(new MethodInsnNode(Opcodes.INVOKEVIRTUAL,
+                        "java/lang/String", "concat",
+                        "(Ljava/lang/String;)Ljava/lang/String;", false));
+                bridge.add(new MethodInsnNode(Opcodes.INVOKESTATIC,
+                        "java/lang/System", "getProperty",
+                        "(Ljava/lang/String;)Ljava/lang/String;", false));
+                bridge.add(new JumpInsnNode(Opcodes.IFNULL, useLocalLoader));
+                bridge.add(new VarInsnNode(Opcodes.ALOAD, 0));
+                bridge.add(new MethodInsnNode(Opcodes.INVOKEVIRTUAL,
+                        "java/lang/ClassLoader", "getParent",
+                        "()Ljava/lang/ClassLoader;", false));
+                bridge.add(new VarInsnNode(Opcodes.ALOAD, 1));
+                bridge.add(new MethodInsnNode(Opcodes.INVOKEVIRTUAL,
+                        "java/lang/ClassLoader", "loadClass",
+                        "(Ljava/lang/String;)Ljava/lang/Class;", false));
+                bridge.add(new InsnNode(Opcodes.ARETURN));
+                bridge.add(useLocalLoader);
+                bridge.add(new FrameNode(Opcodes.F_SAME, 0, null, 0, null));
+                method.instructions.insert(bridge);
+                changed = true;
+            }
+        }
+
+        if (!changed) {
+            return basicClass;
+        }
+
+        // Computing frames can recursively load a class which is already being
+        // defined by this child loader. Preserve the existing frames and add
+        // the single new branch frame above; only the maximum stack changes.
+        ClassWriter writer = new ClassWriter(ClassWriter.COMPUTE_MAXS);
+        node.accept(writer);
+        return writer.toByteArray();
     }
 
     /**

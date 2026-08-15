@@ -8,5 +8,5 @@ import net.minecraft.client.network.NetworkPlayerInfo;
 
 public interface IMixinChatLine {
     HashSet<WeakReference<ChatLine>> chatLines = new HashSet<>();
-    NetworkPlayerInfo getPlayerInfo();
+    NetworkPlayerInfo glide$getPlayerInfo();
 }

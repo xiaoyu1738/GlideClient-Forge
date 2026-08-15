@@ -63,8 +63,8 @@ public class SkinUtils {
         }
         
         layers[4] = SolidPixelWrapper.wrapBox(skin, 8, 12, 4, 16, 32, true, -0.8f);
-        settings.setupSkinLayers(layers);
-        settings.setupHeadLayers(SolidPixelWrapper.wrapBox(skin, 8, 8, 8, 32, 0, false, 0.6f));
+        settings.glide$setupSkinLayers(layers);
+        settings.glide$setupHeadLayers(SolidPixelWrapper.wrapBox(skin, 8, 8, 8, 32, 0, false, 0.6f));
         skin.close();
         
         return true;

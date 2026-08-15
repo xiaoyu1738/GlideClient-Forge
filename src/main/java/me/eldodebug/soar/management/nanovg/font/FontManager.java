@@ -1,6 +1,8 @@
 package me.eldodebug.soar.management.nanovg.font;
 
 import java.nio.ByteBuffer;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 
 import org.lwjgl.nanovg.NanoVG;
 
@@ -8,6 +10,9 @@ import me.eldodebug.soar.logger.GlideLogger;
 import me.eldodebug.soar.utils.IOUtils;
 
 public class FontManager {
+
+	private Method createFontMethod;
+	private boolean integerFreeDataFlag;
 
 	public void init(long nvg) {
 		loadFont(nvg, Fonts.GLICONIC);
@@ -32,7 +37,7 @@ public class FontManager {
 		
 		try {
 			ByteBuffer buffer = IOUtils.resourceToByteBuffer(font.getResourceLocation());
-			loaded = NanoVG.nvgCreateFontMem(nvg, font.getName(), buffer, false);
+			loaded = createFont(nvg, font.getName(), buffer);
 			font.setBuffer(buffer);
 		} catch (Exception e) {
 			GlideLogger.error("Failed to load font", e);
@@ -59,6 +64,35 @@ public class FontManager {
 				NanoVG.nvgAddFallbackFont(nvg, font.getName(), Fonts.GLICONIC.getName());
 			}
 
+		}
+	}
+
+	private int createFont(long nvg, String name, ByteBuffer buffer)
+			throws ReflectiveOperationException {
+		if (createFontMethod == null) {
+			try {
+				createFontMethod = NanoVG.class.getMethod("nvgCreateFontMem",
+						long.class, CharSequence.class, ByteBuffer.class, boolean.class);
+			} catch (NoSuchMethodException ignored) {
+				createFontMethod = NanoVG.class.getMethod("nvgCreateFontMem",
+						long.class, CharSequence.class, ByteBuffer.class, int.class);
+				integerFreeDataFlag = true;
+			}
+		}
+
+		try {
+			Object freeData = integerFreeDataFlag ? Integer.valueOf(0) : Boolean.FALSE;
+			return ((Integer) createFontMethod.invoke(null, nvg, name, buffer, freeData))
+					.intValue();
+		} catch (InvocationTargetException e) {
+			Throwable cause = e.getCause();
+			if (cause instanceof RuntimeException) {
+				throw (RuntimeException) cause;
+			}
+			if (cause instanceof Error) {
+				throw (Error) cause;
+			}
+			throw e;
 		}
 	}
 }

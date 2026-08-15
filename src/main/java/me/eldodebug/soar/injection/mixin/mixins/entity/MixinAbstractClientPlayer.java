@@ -6,7 +6,6 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-import me.eldodebug.soar.management.event.impl.EventFovUpdate;
 import me.eldodebug.soar.management.event.impl.EventLocationCape;
 import me.eldodebug.soar.management.event.impl.EventLocationSkin;
 import net.minecraft.client.entity.AbstractClientPlayer;
@@ -18,15 +17,6 @@ public class MixinAbstractClientPlayer {
 
 	@Shadow
     private NetworkPlayerInfo playerInfo;
-	
-	@Inject(method = "getFovModifier", at = @At("RETURN"), cancellable = true)
-    public void getFovModifier(CallbackInfoReturnable<Float> cir) {
-		
-        EventFovUpdate event = new EventFovUpdate((AbstractClientPlayer) (Object)this, cir.getReturnValue());
-        event.call();
-        
-        cir.setReturnValue(event.getFov());
-    }
 	
 	@Inject(method = "getLocationSkin", at = @At("HEAD"), cancellable = true)
 	public void onGetLocationSkin(CallbackInfoReturnable<ResourceLocation> cir) {

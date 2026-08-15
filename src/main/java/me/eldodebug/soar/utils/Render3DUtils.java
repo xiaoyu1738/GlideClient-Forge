@@ -153,9 +153,9 @@ public class Render3DUtils {
     
     private static Vec3 getRenderPos(double x, double y, double z) {
 
-        x -= ((IMixinRenderManager)mc.getRenderManager()).getRenderPosX();
-        y -= ((IMixinRenderManager)mc.getRenderManager()).getRenderPosY();
-        z -= ((IMixinRenderManager)mc.getRenderManager()).getRenderPosZ();
+        x -= ((IMixinRenderManager)mc.getRenderManager()).glide$getRenderPosX();
+        y -= ((IMixinRenderManager)mc.getRenderManager()).glide$getRenderPosY();
+        z -= ((IMixinRenderManager)mc.getRenderManager()).glide$getRenderPosZ();
 
         return new Vec3(x, y, z);
     }
@@ -177,9 +177,9 @@ public class Render3DUtils {
         GlStateManager.disableCull();
         GL11.glBegin(GL11.GL_TRIANGLE_STRIP);
 
-        double x = entity.lastTickPosX + (entity.posX - entity.lastTickPosX) * ((IMixinMinecraft)mc).getTimer().renderPartialTicks - (((IMixinRenderManager)mc.getRenderManager())).getRenderPosX();
-        double y = (entity.lastTickPosY + (entity.posY - entity.lastTickPosY) * ((IMixinMinecraft)mc).getTimer().renderPartialTicks - (((IMixinRenderManager)mc.getRenderManager())).getRenderPosY()) + Math.sin(System.currentTimeMillis() / 2E+2) + 1;
-        double z = entity.lastTickPosZ + (entity.posZ - entity.lastTickPosZ) * ((IMixinMinecraft)mc).getTimer().renderPartialTicks - (((IMixinRenderManager)mc.getRenderManager())).getRenderPosZ();
+        double x = entity.lastTickPosX + (entity.posX - entity.lastTickPosX) * ((IMixinMinecraft)mc).glide$getTimer().renderPartialTicks - (((IMixinRenderManager)mc.getRenderManager())).glide$getRenderPosX();
+        double y = (entity.lastTickPosY + (entity.posY - entity.lastTickPosY) * ((IMixinMinecraft)mc).glide$getTimer().renderPartialTicks - (((IMixinRenderManager)mc.getRenderManager())).glide$getRenderPosY()) + Math.sin(System.currentTimeMillis() / 2E+2) + 1;
+        double z = entity.lastTickPosZ + (entity.posZ - entity.lastTickPosZ) * ((IMixinMinecraft)mc).glide$getTimer().renderPartialTicks - (((IMixinRenderManager)mc.getRenderManager())).glide$getRenderPosZ();
 
         Color c;
 
@@ -253,9 +253,9 @@ public class Render3DUtils {
 
                 boolean draw = true;
 
-                final double x = v.xCoord - ((IMixinRenderManager)mc.getRenderManager()).getRenderPosX();
-                final double y = v.yCoord -  ((IMixinRenderManager)mc.getRenderManager()).getRenderPosY();
-                final double z = v.zCoord - ((IMixinRenderManager)mc.getRenderManager()).getRenderPosZ();
+                final double x = v.xCoord - ((IMixinRenderManager)mc.getRenderManager()).glide$getRenderPosX();
+                final double y = v.yCoord -  ((IMixinRenderManager)mc.getRenderManager()).glide$getRenderPosY();
+                final double z = v.zCoord - ((IMixinRenderManager)mc.getRenderManager()).glide$getRenderPosZ();
 
                 final double distanceFromPlayer = mc.thePlayer.getDistance(v.xCoord, v.yCoord - 1, v.zCoord);
                 int quality = (int) (distanceFromPlayer * 4 + 10);

@@ -40,9 +40,9 @@ public class WaypointMod extends Mod {
 				
 				String tagName = wy.getName() + " [" + (int) distance + "m]";
 				
-				double x = wy.getX() - ((IMixinRenderManager)mc.getRenderManager()).getRenderPosX();
-				double y = 2.0 + wy.getY() - ((IMixinRenderManager)mc.getRenderManager()).getRenderPosY();
-				double z = wy.getZ() - ((IMixinRenderManager)mc.getRenderManager()).getRenderPosZ();
+				double x = wy.getX() - ((IMixinRenderManager)mc.getRenderManager()).glide$getRenderPosX();
+				double y = 2.0 + wy.getY() - ((IMixinRenderManager)mc.getRenderManager()).glide$getRenderPosY();
+				double z = wy.getZ() - ((IMixinRenderManager)mc.getRenderManager()).glide$getRenderPosZ();
 				
 				if(distance > renderDistance) {
 					x = x / distance * renderDistance;

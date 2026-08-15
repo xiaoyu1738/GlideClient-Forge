@@ -4,15 +4,12 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import me.eldodebug.soar.management.mods.impl.DamageTiltMod;
 import net.minecraft.client.Minecraft;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.util.BlockPos;
-import net.minecraft.world.World;
 
 @Mixin(Entity.class)
 public class MixinEntity {
@@ -25,11 +22,6 @@ public class MixinEntity {
         if (!this.onGround) {
         	ci.cancel();
         }
-    }
-    
-    @Redirect(method = "getBrightnessForRender", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/World;isBlockLoaded(Lnet/minecraft/util/BlockPos;)Z"))
-    public boolean alwaysReturnTrue(World world, BlockPos pos) {
-        return true;
     }
     
 	@Inject(method = "setVelocity", at = @At("HEAD"))

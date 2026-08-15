@@ -17,31 +17,44 @@ The current Forge mod build targets:
 - OptiFine 1.8.9 HD U M6 pre2
 - Java 8
 
-The drop-in Forge bootstrap has been structurally validated and builds
-successfully. Runtime testing with OptiFine and other coremods is still ongoing.
+The Forge artifact builds successfully and has completed an automated mixed-Mod
+world-entry smoke test. The tested setup loaded 11 Forge Mod containers,
+including OneConfig, Essential, Keystrokes, NotEnoughUpdates, PolyPatcher,
+SimpleToggleSprint, and GlideClient, with the Myau coremod also present.
+Keystrokes, sprint status, Glide CPS, and Glide's modern hotbar rendered at the
+same time. This is a regression baseline, not a claim that every Forge Mod is
+compatible.
 
 This is an independent community project. It is not an official GlideClient,
 Minecraft, Forge, or OptiFine release.
 
 ## Current Compatibility Work
 
-- Provides a Forge `IFMLLoadingPlugin` and regular `@Mod` lifecycle entry point.
+- Provides a Forge-ordered Mixin tweaker and regular `@Mod` lifecycle entry
+  point.
 - Loads directly from the normal Forge `mods` directory.
-- Detects Forge launches and defers Glide's Mixin bootstrap until Forge has
-  installed its runtime deobfuscation transformer.
+- Starts the embedded Mixin subsystem only after Forge installs its runtime
+  deobfuscation transformer.
 - Uses the Forge `searge` obfuscation context.
-- Bridges Glide's 2D HUD events from Forge's `RenderGameOverlayEvent` into the
-  existing internal event bus.
+- Bridges client ticks, render ticks, keyboard and mouse input, world lifecycle,
+  player and living updates, attacks, jumps, FOV changes, sound playback, menu
+  opening, world-last/player/living rendering, block highlights, first-person
+  overlays, and HUD elements through Forge events.
+- Preserves Forge overlay `Post` notifications when Glide replaces a vanilla HUD
+  element, allowing third-party HUD listeners to keep rendering.
+- Isolates individual Glide event-handler, NanoVG, blur, and modern-hotbar
+  failures so one failed feature does not suppress the complete Forge HUD.
 - Works around conflicting OptiFine Forge API stubs and Vecmath class loading.
 
 ## Roadmap
 
-1. Stabilize the drop-in Forge mod bootstrap with OptiFine and other coremods.
-2. Move input, tick, connection, and remaining render hooks to Forge events.
-3. Move Glide startup and shutdown ownership into the Forge lifecycle.
-4. Reduce and eventually remove classpath transformers as equivalent Forge APIs
+1. Expand automated smoke coverage across additional independent Mod sets and
+   both survival and creative HUD states.
+2. Move remaining hooks to Forge events wherever Forge 1.8.9 exposes an
+   equivalent contract.
+3. Reduce and eventually remove classpath transformers as equivalent Forge APIs
    become available.
-5. Add runtime smoke tests and artifact-structure checks to CI.
+4. Add artifact-structure and Windows runtime smoke tests to CI.
 
 The migration will be incremental. Replacing all Mixins at once would create a
 large regression surface across rendering, GUI, networking, and performance
@@ -93,14 +106,17 @@ project; newer Java runtimes are not supported by the current build.
 
 ## Launch Architecture
 
-Forge discovers `GlideLoadingPlugin` from the Forge JAR manifest. The plugin
-installs the OptiFine compatibility transformer and queues Glide's Mixin setup
-after Forge's runtime deobfuscation transformer. Forge then discovers
-`GlideForgeMod` through normal `@Mod` scanning and registers the event bridge.
+The JAR manifest registers `GlideMixinTweaker` after Forge's primary tweaker.
+It verifies that Forge runtime deobfuscation is active, prepares the narrow
+Vecmath/LWJGL class-loading compatibility boundary, delegates to the embedded
+Mixin tweaker, and registers `mixins.soar.json`. Forge then discovers
+`GlideForgeMod` through normal `@Mod` scanning and registers `ForgeEventBridge`
+on the Forge and FML event buses.
 
-This is a transitional port: installation and lifecycle discovery use Forge,
-while many game hooks still use Mixin. All supported launches use this Forge
-mod path.
+This remains a hybrid implementation: installation, lifecycle, input, world
+events, and the shared HUD path use Forge, while low-level rendering and game
+behavior without a Forge 1.8.9 event still use Mixins. All supported launches
+use this Forge Mod path.
 
 ## Upstream and Attribution
 

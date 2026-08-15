@@ -17,9 +17,10 @@ remains with the respective copyright holders.
 
 This repository contains modifications made beginning in August 2026 to add a
 Minecraft Forge 1.8.9 port. The changes include a standard Forge mod
-container, an early Forge loading plugin for the remaining Mixins, Forge-aware
-runtime mapping selection, Forge event-based HUD integration, compatibility
-handling for selected OptiFine API stubs, and Forge-only artifact generation.
+container, a Forge-ordered tweaker for the remaining Mixins, Forge-aware runtime
+mapping selection, Forge event-based lifecycle/input/HUD integration,
+compatibility handling for selected OptiFine API stubs, and Forge-only artifact
+generation.
 
 The Forge artifact can now be discovered from the normal `mods` directory, but
 the project remains a hybrid port because substantial behavior still depends

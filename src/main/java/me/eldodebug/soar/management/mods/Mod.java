@@ -80,6 +80,9 @@ public class Mod {
     }
 
     public void setToggled(boolean toggled, boolean sound) {
+		if (this.toggled == toggled) {
+			return;
+		}
 
         this.toggled = toggled;
 

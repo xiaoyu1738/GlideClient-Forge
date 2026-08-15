@@ -12,7 +12,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import me.eldodebug.soar.injection.interfaces.IMixinRenderPlayer;
 import me.eldodebug.soar.management.event.impl.EventHitOverlay;
-import me.eldodebug.soar.management.event.impl.EventRendererLivingEntity;
 import me.eldodebug.soar.management.mods.impl.NametagMod;
 import me.eldodebug.soar.management.mods.impl.Skin3DMod;
 import net.minecraft.client.Minecraft;
@@ -93,18 +92,6 @@ public abstract class MixinRendererLivingEntity <T extends EntityLivingBase> ext
 		ci.cancel();
 	}
 
-	@SuppressWarnings("unchecked")
-	@Inject(method = "doRender", at = @At("HEAD"), cancellable = true)
-	public void preDoRender(T entity, double x, double y, double z, float entityYaw, float partialTicks, CallbackInfo ci) {
-		
-		EventRendererLivingEntity event = new EventRendererLivingEntity((RendererLivingEntity<EntityLivingBase>) (Object)this, entity, x, y, z);
-		event.call();
-		
-		if(event.isCancelled()) {
-			ci.cancel();
-		}
-	}
-	
 	@Redirect(method = "canRenderName", at = @At(value = "FIELD", target = "Lnet/minecraft/client/renderer/entity/RenderManager;livingPlayer:Lnet/minecraft/entity/Entity;"))
 	public Entity renderOwnName(RenderManager manager) {
 		
@@ -144,8 +131,8 @@ public abstract class MixinRendererLivingEntity <T extends EntityLivingBase> ext
                     GlStateManager.blendFunc(770, 771);
                     GlStateManager.alphaFunc(516, 0.003921569F);
                 }
-                playerRenderer.getHeadLayer().doRenderLayer((AbstractClientPlayer) p_renderModel_1_, p_renderModel_2_, 0f, p_renderModel_3_, p_renderModel_4_, p_renderModel_5_, p_renderModel_6_, p_renderModel_7_);
-                playerRenderer.getBodyLayer().doRenderLayer((AbstractClientPlayer) p_renderModel_1_, p_renderModel_2_, 0f, p_renderModel_3_, p_renderModel_4_, p_renderModel_5_, p_renderModel_6_, p_renderModel_7_);
+                playerRenderer.glide$getHeadLayer().doRenderLayer((AbstractClientPlayer) p_renderModel_1_, p_renderModel_2_, 0f, p_renderModel_3_, p_renderModel_4_, p_renderModel_5_, p_renderModel_6_, p_renderModel_7_);
+                playerRenderer.glide$getBodyLayer().doRenderLayer((AbstractClientPlayer) p_renderModel_1_, p_renderModel_2_, 0f, p_renderModel_3_, p_renderModel_4_, p_renderModel_5_, p_renderModel_6_, p_renderModel_7_);
                 if (flag1) {
                     GlStateManager.disableBlend();
                     GlStateManager.alphaFunc(516, 0.1F);

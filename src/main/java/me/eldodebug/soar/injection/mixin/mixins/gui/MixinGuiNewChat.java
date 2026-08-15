@@ -4,7 +4,6 @@ import java.util.List;
 
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -97,13 +96,15 @@ public abstract class MixinGuiNewChat extends Gui {
         return instance.drawStringWithShadow(text, x, y, lastOpacity);
     }
     
-    @Overwrite
-	public void printChatMessage(IChatComponent component) {
+	@Inject(method = "printChatMessage", at = @At("HEAD"), cancellable = true)
+	private void glide$printCompactChatMessage(IChatComponent component, CallbackInfo ci) {
     	
     	ChatMod mod = ChatMod.getInstance();
     	
-		if(mod.isToggled() && mod.getCompactSetting().isToggled()) {
-			
+		if(!mod.isToggled() || !mod.getCompactSetting().isToggled()) {
+			return;
+		}
+
 	    	if (component.getUnformattedText().equals(lastMessage)) {
 	    		mc.ingameGUI.getChatGUI().deleteChatLine(line);
 	    		sameMessageAmount++;
@@ -113,19 +114,14 @@ public abstract class MixinGuiNewChat extends Gui {
 	    		sameMessageAmount = 1;
 	    		lastMessage = component.getUnformattedText();
 	    	}
-	 
+
 	    	line++;
-	 
 	    	if (line > 256) {
 	    		line = 0;
 	    	}
-	    	
+
 	    	printChatMessageWithOptionalDeletion(component, line);
-	    	
-	    	return;
-		}
-		
-		printChatMessageWithOptionalDeletion(component, 0);
+		ci.cancel();
 	}
 
 	@Redirect(method = "setChatLine", at = @At(value = "INVOKE", target = "Ljava/util/List;size()I"))
@@ -212,11 +208,4 @@ public abstract class MixinGuiNewChat extends Gui {
         }
     }
     
-    @Redirect(method = "deleteChatLine", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/ChatLine;getChatLineID()I"))
-    private int adeleteChatLine(ChatLine instance) {
-        if (instance == null) {
-        	return -1;
-        }
-        return instance.getChatLineID();
-    }
 }

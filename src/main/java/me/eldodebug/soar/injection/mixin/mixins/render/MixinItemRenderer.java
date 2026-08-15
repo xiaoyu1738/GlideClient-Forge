@@ -10,9 +10,7 @@ import org.spongepowered.asm.mixin.injection.ModifyConstant;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-import me.eldodebug.soar.management.event.impl.EventFireOverlay;
 import me.eldodebug.soar.management.event.impl.EventRenderItemInFirstPerson;
-import me.eldodebug.soar.management.event.impl.EventWaterOverlay;
 import me.eldodebug.soar.management.mods.impl.AnimationsMod;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.AbstractClientPlayer;
@@ -46,28 +44,6 @@ public class MixinItemRenderer {
 	public void renderItemInFirstPerson(CallbackInfo ci) {
 		new EventRenderItemInFirstPerson().call();
 	}
-    
-    @Inject(method = "renderWaterOverlayTexture", at = @At("HEAD"), cancellable = true)
-    private void preRenderWaterOverlayTexture(CallbackInfo ci) {
-    	
-    	EventWaterOverlay event = new EventWaterOverlay();
-    	event.call();
-    	
-    	if(event.isCancelled()) {
-    		ci.cancel();
-    	}
-    }
-    
-    @Inject(at = @At("HEAD"), method = "renderFireInFirstPerson", cancellable = true)
-    private void renderFireInFirstPerson(CallbackInfo ci) {
-    	
-    	EventFireOverlay event = new EventFireOverlay();
-    	event.call();
-    	
-    	if(event.isCancelled()) {
-    		ci.cancel();
-    	}
-    }
     
     @ModifyConstant(method = "renderItemInFirstPerson", constant = @Constant(floatValue = 0.0f))
     public float modifyTransformItem(float original, float partialTicks) {

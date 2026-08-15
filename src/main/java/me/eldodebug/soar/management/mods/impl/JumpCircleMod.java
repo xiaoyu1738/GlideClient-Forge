@@ -66,11 +66,11 @@ public class JumpCircleMod extends Mod {
                 float blue = (float) (currentColor.getInterpolateColor().getRGB() & 255) / 255.0F;
                 
                 Vec3 pos = circle.pos();
-                double x = Math.cos(Math.toRadians(i)) * createAnimation(1.0 - circle.getAnimation(((IMixinMinecraft)mc).getTimer().renderPartialTicks)) * 0.7;
-                double z = Math.sin(Math.toRadians(i)) * createAnimation(1.0 - circle.getAnimation(((IMixinMinecraft)mc).getTimer().renderPartialTicks)) * 0.7;
-                GL11.glColor4d(red, green, blue, 0.6 * circle.getAnimation(((IMixinMinecraft)mc).getTimer().renderPartialTicks));
+                double x = Math.cos(Math.toRadians(i)) * createAnimation(1.0 - circle.getAnimation(((IMixinMinecraft)mc).glide$getTimer().renderPartialTicks)) * 0.7;
+                double z = Math.sin(Math.toRadians(i)) * createAnimation(1.0 - circle.getAnimation(((IMixinMinecraft)mc).glide$getTimer().renderPartialTicks)) * 0.7;
+                GL11.glColor4d(red, green, blue, 0.6 * circle.getAnimation(((IMixinMinecraft)mc).glide$getTimer().renderPartialTicks));
                 GL11.glVertex3d(pos.xCoord + x, pos.yCoord + (double)0.2f, pos.zCoord + z);
-                GL11.glColor4d(red, green, blue, 0.2 * circle.getAnimation(((IMixinMinecraft)mc).getTimer().renderPartialTicks));
+                GL11.glColor4d(red, green, blue, 0.2 * circle.getAnimation(((IMixinMinecraft)mc).glide$getTimer().renderPartialTicks));
                 GL11.glVertex3d(pos.xCoord + x * 1.4, pos.yCoord + (double)0.2f, pos.zCoord + z * 1.4);
             }
             GL11.glEnd();	
@@ -113,7 +113,7 @@ public class JumpCircleMod extends Mod {
         }
 
         public Vec3 pos() {
-            return new Vec3(this.vector.xCoord - ((IMixinRenderManager)mc.getRenderManager()).getRenderPosX(), this.vector.yCoord - ((IMixinRenderManager)mc.getRenderManager()).getRenderPosY(), this.vector.zCoord - ((IMixinRenderManager)mc.getRenderManager()).getRenderPosZ());
+            return new Vec3(this.vector.xCoord - ((IMixinRenderManager)mc.getRenderManager()).glide$getRenderPosX(), this.vector.yCoord - ((IMixinRenderManager)mc.getRenderManager()).glide$getRenderPosY(), this.vector.zCoord - ((IMixinRenderManager)mc.getRenderManager()).glide$getRenderPosZ());
         }
     }
 }

@@ -1,7 +1,7 @@
 package me.eldodebug.soar.injection.interfaces;
 
 public interface IMixinRenderManager {
-    double getRenderPosX();
-    double getRenderPosY();
-    double getRenderPosZ();
+    double glide$getRenderPosX();
+    double glide$getRenderPosY();
+    double glide$getRenderPosZ();
 }

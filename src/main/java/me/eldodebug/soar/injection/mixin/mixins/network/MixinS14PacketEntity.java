@@ -22,22 +22,22 @@ public class MixinS14PacketEntity implements IMixinS14PacketEntity {
     protected byte posZ;
 
 	@Override
-	public int getEntityId() {
+	public int glide$getEntityId() {
 		return entityId;
 	}
 
 	@Override
-	public byte getPosX() {
+	public byte glide$getPosX() {
 		return posX;
 	}
 
 	@Override
-	public byte getPosY() {
+	public byte glide$getPosY() {
 		return posY;
 	}
 
 	@Override
-	public byte getPosZ() {
+	public byte glide$getPosZ() {
 		return posZ;
 	}
 }

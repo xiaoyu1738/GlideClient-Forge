@@ -23,7 +23,7 @@ public class BodyLayerFeatureRenderer implements LayerRenderer<AbstractClientPla
     private static final Minecraft mc = Minecraft.getMinecraft();
     
     public BodyLayerFeatureRenderer(RenderPlayer playerRenderer) {
-        thinArms = ((IMixinRenderPlayer)playerRenderer).hasThinArms();
+        thinArms = ((IMixinRenderPlayer)playerRenderer).glide$hasThinArms();
         bodyLayers.add(new Layer(0, false, EnumPlayerModelParts.LEFT_PANTS_LEG, Shape.LEGS, () -> playerRenderer.getMainModel().bipedLeftLeg));
         bodyLayers.add(new Layer(1, false, EnumPlayerModelParts.RIGHT_PANTS_LEG, Shape.LEGS, () -> playerRenderer.getMainModel().bipedRightLeg));
         bodyLayers.add(new Layer(2, false, EnumPlayerModelParts.LEFT_SLEEVE, thinArms ? Shape.ARMS_SLIM : Shape.ARMS, () -> playerRenderer.getMainModel().bipedLeftArm));
@@ -48,11 +48,11 @@ public class BodyLayerFeatureRenderer implements LayerRenderer<AbstractClientPla
         
         IMixinEntityPlayer settings = (IMixinEntityPlayer) player;
         
-        if(settings.getSkinLayers() == null && !setupModel(player, settings)) {
+        if(settings.glide$getSkinLayers() == null && !setupModel(player, settings)) {
             return;
         }
 
-        renderLayers(player, (CustomizableModelPart[]) settings.getSkinLayers(), deltaTick);
+        renderLayers(player, (CustomizableModelPart[]) settings.glide$getSkinLayers(), deltaTick);
     }
 
     private boolean setupModel(AbstractClientPlayer abstractClientPlayerEntity, IMixinEntityPlayer settings) {

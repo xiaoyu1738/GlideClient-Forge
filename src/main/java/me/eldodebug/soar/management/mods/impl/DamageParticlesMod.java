@@ -97,9 +97,9 @@ public class DamageParticlesMod extends Mod {
 	public void onRender3D(EventRender3D event) {
 		
 		for (Particle particle : this.particles) {
-			double x = particle.location.getX() - ((IMixinRenderManager)mc.getRenderManager()).getRenderPosX();
-			double y = particle.location.getY() - ((IMixinRenderManager)mc.getRenderManager()).getRenderPosY();
-			double z = particle.location.getZ() - ((IMixinRenderManager)mc.getRenderManager()).getRenderPosZ();
+			double x = particle.location.getX() - ((IMixinRenderManager)mc.getRenderManager()).glide$getRenderPosX();
+			double y = particle.location.getY() - ((IMixinRenderManager)mc.getRenderManager()).glide$getRenderPosY();
+			double z = particle.location.getZ() - ((IMixinRenderManager)mc.getRenderManager()).glide$getRenderPosZ();
 
 			GlStateManager.pushMatrix();
 

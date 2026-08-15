@@ -13,7 +13,7 @@ public class MixinItemFood implements IMixinItemFood {
 	private int potionId;
 
 	@Override
-	public int getPotionID() {
+	public int glide$getPotionID() {
 		return potionId;
 	}
 }

@@ -45,6 +45,8 @@ public class NanoVGManager {
 	private HashMap<Integer, NVGColor> colorCache = new HashMap<Integer, NVGColor>();
 	
 	private long nvg;
+	private volatile boolean available = true;
+	private boolean failureLogged;
 	
 	private FontManager fontManager;
 	private AssetManager assetManager;
@@ -54,8 +56,7 @@ public class NanoVGManager {
 		nvg = NanoVGGL2.nvgCreate(NanoVGGL2.NVG_ANTIALIAS);
 		
 		if(nvg == 0) {
-			GlideLogger.error("Failed to create NanoVG context");
-			mc.shutdown();
+			throw new IllegalStateException("Failed to create NanoVG context");
 		}
 		
 		fontManager = new FontManager();
@@ -64,27 +65,83 @@ public class NanoVGManager {
 		assetManager = new AssetManager();
 	}
 	
-    public void setupAndDraw(Runnable task, boolean scale) {
+    public boolean trySetupAndDraw(Runnable task, boolean scale) {
+		if (!available) {
+			return false;
+		}
 
     	ScaledResolution sr = new ScaledResolution(mc);
-    	
-        GL11.glPushAttrib(GL11.GL_ALL_ATTRIB_BITS);
-        NanoVG.nvgBeginFrame(nvg, mc.displayWidth, mc.displayHeight, 1);
-        
-        if(scale) {
-        	NanoVG.nvgScale(nvg, sr.getScaleFactor(), sr.getScaleFactor());
-        }
-        
-        task.run();
+		boolean attributesPushed = false;
+		boolean frameStarted = false;
+		boolean frameEnded = false;
+		boolean runningTask = false;
 
-        GL11.glDisable(GL11.GL_ALPHA_TEST);
-        NanoVG.nvgEndFrame(nvg);
-        GL11.glPopAttrib();
+        try {
+			GL11.glPushAttrib(GL11.GL_ALL_ATTRIB_BITS);
+			attributesPushed = true;
+            NanoVG.nvgBeginFrame(nvg, mc.displayWidth, mc.displayHeight, 1);
+			frameStarted = true;
+
+			if(scale) {
+				NanoVG.nvgScale(nvg, sr.getScaleFactor(), sr.getScaleFactor());
+			}
+
+			runningTask = true;
+			task.run();
+			runningTask = false;
+			GL11.glDisable(GL11.GL_ALPHA_TEST);
+			NanoVG.nvgEndFrame(nvg);
+			frameEnded = true;
+			return true;
+		} catch (Throwable throwable) {
+			if (runningTask) {
+				if (throwable instanceof RuntimeException) {
+					throw (RuntimeException) throwable;
+				}
+				if (throwable instanceof Error) {
+					throw (Error) throwable;
+				}
+				throw new RuntimeException(throwable);
+			}
+			disable(throwable);
+			return false;
+        } finally {
+			if (frameStarted && !frameEnded) {
+				try {
+					NanoVG.nvgCancelFrame(nvg);
+				} catch (Throwable ignored) {
+				}
+			}
+			if (attributesPushed) {
+				try {
+					GL11.glPopAttrib();
+				} catch (Throwable ignored) {
+				}
+			}
+        }
     }
+
+    public void setupAndDraw(Runnable task, boolean scale) {
+		trySetupAndDraw(task, scale);
+	}
     
     public void setupAndDraw(Runnable task) {
     	setupAndDraw(task, true);
     }
+
+	public boolean isAvailable() {
+		return available;
+	}
+
+	private synchronized void disable(Throwable throwable) {
+		available = false;
+		if (!failureLogged) {
+			failureLogged = true;
+			GlideLogger.getLogger().error(
+					"[GC/ERROR] NanoVG rendering failed; disabling Glide NanoVG rendering",
+					throwable);
+		}
+	}
     
     public void drawAlphaBar(float x, float y, float width, float height, float radius, Color color) {
     	

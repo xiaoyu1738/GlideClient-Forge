@@ -118,6 +118,6 @@ public abstract class MixinGuiContainer extends GuiScreen {
         checkHotbarKeys(mouseButton - 100);
     }
     
-    @Redirect(method = "drawScreen", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/inventory/GuiContainer;drawDefaultBackground()V"))
-    public void removeDrawDefaultBackground() {}
+    @Redirect(method = "drawScreen", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/GuiScreen;drawDefaultBackground()V"))
+    public void removeDrawDefaultBackground(GuiScreen screen) {}
 }

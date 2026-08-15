@@ -73,12 +73,12 @@ public class BorderlessFullscreenMod extends Mod {
 				prevHeight = mc.displayHeight;
 				Display.setDisplayMode(new DisplayMode(Display.getDesktopDisplayMode().getWidth(), Display.getDesktopDisplayMode().getHeight()));
 				Display.setLocation(0, 0);
-				((IMixinMinecraft)mc).resizeWindow(Display.getDesktopDisplayMode().getWidth(), Display.getDesktopDisplayMode().getHeight());
+				((IMixinMinecraft)mc).glide$resizeWindow(Display.getDesktopDisplayMode().getWidth(), Display.getDesktopDisplayMode().getHeight());
 			}
 			else {
 				Display.setDisplayMode(new DisplayMode(prevWidth, prevHeight));
 				Display.setLocation(prevX, prevY);
-				((IMixinMinecraft)mc).resizeWindow(prevWidth, prevHeight);
+				((IMixinMinecraft)mc).glide$resizeWindow(prevWidth, prevHeight);
 
 				if(mc.inGameHasFocus) {
 					mc.mouseHelper.ungrabMouseCursor();

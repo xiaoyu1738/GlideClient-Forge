@@ -1,22 +1,26 @@
-package me.eldodebug.soar.forge;
+package me.eldodebug.soar.bootstrap;
 
+import java.io.File;
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.net.URISyntaxException;
+import java.util.List;
 import java.util.Set;
 
-import me.eldodebug.soar.injection.transformer.LwjglTransformer;
+import net.minecraft.launchwrapper.Launch;
 import net.minecraft.launchwrapper.LaunchClassLoader;
 import net.minecraft.launchwrapper.LogWrapper;
-import org.spongepowered.asm.launch.MixinBootstrap;
-import org.spongepowered.asm.mixin.MixinEnvironment;
-import org.spongepowered.asm.mixin.Mixins;
 
 final class ForgeMixinBootstrap {
 
     private static final String FORGE_DEOBFUSCATION_TRANSFORMER =
             "net.minecraftforge.fml.common.asm.transformers.DeobfuscationTransformer";
-    private static final String MIXIN_CONFIG = "mixins.soar.json";
     private static final String VECMATH_MATRIX = "javax.vecmath.Matrix4f";
-
+    private static final String LWJGL_TRANSFORMER =
+            "me.eldodebug.soar.injection.transformer.LwjglTransformer";
+    private static final String OPTIFINE_STATE_KEY = "glide.optifineLoaded";
+    private static final String CORE_MOD_MANAGER =
+            "net.minecraftforge.fml.relauncher.CoreModManager";
     private static final String[] LWJGL2_CLASS_LOADER_EXCLUSIONS = {
             "org.lwjgl.input.",
             "org.lwjgl.openal.",
@@ -41,13 +45,13 @@ final class ForgeMixinBootstrap {
             "org.lwjgl.WindowsSysImplementation"
     };
 
-    private static boolean initialized;
+    private static boolean prepared;
 
     private ForgeMixinBootstrap() {
     }
 
-    static synchronized void initialize(LaunchClassLoader classLoader) {
-        if (initialized) {
+    static synchronized void prepare(LaunchClassLoader classLoader) {
+        if (prepared) {
             return;
         }
         if (!hasTransformer(classLoader, FORGE_DEOBFUSCATION_TRANSFORMER)) {
@@ -55,20 +59,36 @@ final class ForgeMixinBootstrap {
                     "Forge runtime deobfuscation must be installed before Glide Mixins");
         }
 
-        configureLwjglClassLoading(classLoader);
-        if (!hasTransformer(classLoader, LwjglTransformer.class.getName())) {
-            classLoader.registerTransformer(LwjglTransformer.class.getName());
+        ensureForgeModDiscovery();
+        Launch.blackboard.put(OPTIFINE_STATE_KEY,
+                classLoader.getResource("optifine/Patcher.class") != null);
+        configureLwjglClassLoading(classLoader, false);
+        if (!hasTransformer(classLoader, LWJGL_TRANSFORMER)) {
+            classLoader.registerTransformer(LWJGL_TRANSFORMER);
         }
         preloadForgeVecmath(classLoader);
 
-        MixinBootstrap.init();
-        MixinEnvironment environment = MixinEnvironment.getDefaultEnvironment();
-        environment.setSide(MixinEnvironment.Side.CLIENT);
-        environment.setObfuscationContext("searge");
-        Mixins.addConfiguration(MIXIN_CONFIG);
+        prepared = true;
+        LogWrapper.info("Glide prepared Forge class loading before Mixin initialization");
+    }
 
-        initialized = true;
-        LogWrapper.info("Glide initialized as a Forge mod with searge mappings");
+    private static void ensureForgeModDiscovery() {
+        try {
+            File source = new File(GlideMixinTweaker.class.getProtectionDomain()
+                    .getCodeSource().getLocation().toURI());
+            ClassLoader bootstrapLoader = GlideMixinTweaker.class.getClassLoader();
+            Class<?> coreModManager = Class.forName(
+                    CORE_MOD_MANAGER, true, bootstrapLoader);
+            Method getIgnoredMods = coreModManager.getMethod("getIgnoredMods");
+            @SuppressWarnings("unchecked")
+            List<String> ignoredMods = (List<String>) getIgnoredMods.invoke(null);
+
+            if (ignoredMods.remove(source.getName())) {
+                LogWrapper.info("Glide restored Forge mod discovery for %s", source.getName());
+            }
+        } catch (ReflectiveOperationException | URISyntaxException e) {
+            throw new IllegalStateException("Unable to register Glide with Forge discovery", e);
+        }
     }
 
     private static boolean hasTransformer(LaunchClassLoader classLoader, String transformerClass) {
@@ -105,7 +125,8 @@ final class ForgeMixinBootstrap {
     }
 
     @SuppressWarnings("unchecked")
-    private static void configureLwjglClassLoading(LaunchClassLoader classLoader) {
+    private static void configureLwjglClassLoading(LaunchClassLoader classLoader,
+            boolean useParentLwjgl3) {
         try {
             Field classLoaderExceptions = LaunchClassLoader.class.getDeclaredField(
                     "classLoaderExceptions");
@@ -117,8 +138,15 @@ final class ForgeMixinBootstrap {
                     classLoader.addClassLoaderExclusion(exclusion);
                 }
             }
+
+            if (useParentLwjgl3) {
+                classLoader.addClassLoaderExclusion("org.lwjgl.nanovg.");
+                classLoader.addClassLoaderExclusion("org.lwjgl.system.");
+                classLoader.addClassLoaderExclusion("org.lwjgl.stb.");
+            }
         } catch (NoSuchFieldException | IllegalAccessException e) {
             throw new IllegalStateException("Unable to configure LWJGL class loading", e);
         }
     }
+
 }

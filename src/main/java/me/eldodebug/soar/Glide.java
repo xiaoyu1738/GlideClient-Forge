@@ -71,7 +71,7 @@ public class Glide {
 	private ClickEffects clickEffects;
 	private BlacklistManager blacklistManager;
 	private RestrictedMod restrictedMod;
-	private boolean starting, started;
+	private boolean starting, started, startupFailed;
 	
 	public Glide() {
 		name = "Glide";
@@ -80,7 +80,7 @@ public class Glide {
 	}
 	
 	public synchronized void start() {
-		if(starting || started) {
+		if(starting || started || startupFailed) {
 			return;
 		}
 
@@ -99,10 +99,15 @@ public class Glide {
 			firstLoginFile = new File(fileManager.getCacheDir(), "first.tmp");
 			languageManager = new LanguageManager();
 			eventManager = new EventManager();
+
+			if (nanoVGManager == null) {
+				nanoVGManager = new NanoVGManager();
+			}
+
+			// Module classes contain NanoVG types in their signatures. Establish the
+			// single runtime provider before discovering or initializing those classes.
 			modManager = new ModManager();
-
 			modManager.init();
-
 			capeManager = new CapeManager();
 			colorManager = new ColorManager();
 			profileManager = new ProfileManager();
@@ -130,6 +135,14 @@ public class Glide {
 			clickEffects = new ClickEffects();
 			mc.updateDisplay();
 			started = true;
+		} catch (Throwable throwable) {
+			startupFailed = true;
+			started = false;
+			if (eventManager != null) {
+				eventManager.shutdown();
+				eventManager = null;
+			}
+			GlideLogger.getLogger().error("[GC/ERROR] Glide startup failed; continuing with Forge", throwable);
 		} finally {
 			starting = false;
 		}

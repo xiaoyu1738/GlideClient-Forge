@@ -25,7 +25,7 @@ public class HeadLayerFeatureRenderer implements LayerRenderer<AbstractClientPla
 	private RenderPlayer playerRenderer;
 	
     public HeadLayerFeatureRenderer(RenderPlayer playerRenderer) {
-        thinArms = ((IMixinRenderPlayer)playerRenderer).hasThinArms();
+        thinArms = ((IMixinRenderPlayer)playerRenderer).glide$hasThinArms();
         this.playerRenderer = playerRenderer;
     }
 
@@ -48,7 +48,7 @@ public class HeadLayerFeatureRenderer implements LayerRenderer<AbstractClientPla
 		
 		IMixinEntityPlayer settings = (IMixinEntityPlayer) player;
 		
-		if(settings.getHeadLayers() == null && !setupModel(player, settings)) {
+		if(settings.glide$getHeadLayers() == null && !setupModel(player, settings)) {
 			return;
 		}
 
@@ -68,7 +68,7 @@ public class HeadLayerFeatureRenderer implements LayerRenderer<AbstractClientPla
 
 	public void renderCustomHelmet(IMixinEntityPlayer settings, AbstractClientPlayer abstractClientPlayer, float deltaTick) {
 		
-		if(settings.getHeadLayers() == null) {
+		if(settings.glide$getHeadLayers() == null) {
 			return;
 		}
 		
@@ -89,7 +89,7 @@ public class HeadLayerFeatureRenderer implements LayerRenderer<AbstractClientPla
 		GlStateManager.scale(voxelSize, voxelSize, voxelSize);
 		
 		boolean tintRed = abstractClientPlayer.hurtTime > 0 || abstractClientPlayer.deathTime > 0;
-		settings.getHeadLayers().render(tintRed);
+		settings.glide$getHeadLayers().render(tintRed);
 		GlStateManager.popMatrix();
 	}
 

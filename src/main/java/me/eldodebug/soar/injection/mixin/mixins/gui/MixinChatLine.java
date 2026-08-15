@@ -76,7 +76,7 @@ public class MixinChatLine implements IMixinChatLine {
     }
 
     @Override
-    public NetworkPlayerInfo getPlayerInfo() {
+    public NetworkPlayerInfo glide$getPlayerInfo() {
         return playerInfo;
     }
 }

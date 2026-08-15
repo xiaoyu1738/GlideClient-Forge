@@ -5,36 +5,27 @@ import me.eldodebug.soar.utils.MacOSUtils;
 import net.minecraft.util.Util;
 import org.apache.commons.lang3.SystemUtils;
 import org.lwjgl.input.Keyboard;
-import org.lwjgl.input.Mouse;
 import org.lwjgl.opengl.Display;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.gen.Accessor;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyArg;
-import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import me.eldodebug.soar.Glide;
 import me.eldodebug.soar.gui.GuiSplashScreen;
 import me.eldodebug.soar.injection.interfaces.IMixinEntityLivingBase;
 import me.eldodebug.soar.injection.interfaces.IMixinMinecraft;
-import me.eldodebug.soar.management.event.impl.EventClickMouse;
-import me.eldodebug.soar.management.event.impl.EventKey;
-import me.eldodebug.soar.management.event.impl.EventScrollMouse;
 import me.eldodebug.soar.management.event.impl.EventToggleFullscreen;
-import me.eldodebug.soar.management.event.impl.EventUpdateDisplay;
-import me.eldodebug.soar.management.event.impl.EventUpdateFramebufferSize;
 import me.eldodebug.soar.management.mods.impl.FPSLimiterMod;
 import me.eldodebug.soar.management.mods.impl.FPSSpooferMod;
-import me.eldodebug.soar.management.mods.impl.HitDelayFixMod;
 import me.eldodebug.soar.management.mods.impl.AnimationsMod;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.EntityPlayerSP;
-import net.minecraft.client.gui.GuiMainMenu;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.gui.GuiScreenWorking;
 import net.minecraft.client.multiplayer.PlayerControllerMP;
@@ -45,7 +36,6 @@ import net.minecraft.client.renderer.texture.TextureManager;
 import net.minecraft.client.resources.DefaultResourcePack;
 import net.minecraft.client.settings.GameSettings;
 import net.minecraft.client.settings.KeyBinding;
-import net.minecraft.client.stream.IStream;
 import net.minecraft.entity.Entity;
 import net.minecraft.util.MovingObjectPosition;
 import net.minecraft.util.Session;
@@ -55,7 +45,7 @@ import net.minecraft.util.Timer;
 public abstract class MixinMinecraft implements IMixinMinecraft {
 
 	@Shadow
-    private Timer timer = new Timer(20.0F);
+    private Timer timer;
 	
     @Shadow
     public int displayWidth;
@@ -123,24 +113,6 @@ public abstract class MixinMinecraft implements IMixinMinecraft {
 
 	@Shadow protected abstract void resize(int width, int height);
 
-	@Redirect(method = "runTick", at = @At(value = "INVOKE", target = "Lorg/lwjgl/input/Mouse;next()Z"))
-	public boolean nextMouse() {
-		
-		boolean next = Mouse.next();
-
-		if(next) {
-			
-			EventClickMouse event = new EventClickMouse(Mouse.getEventButton());
-			event.call();
-			
-			if(event.isCancelled()) {
-				next = nextMouse();
-			}
-		}
-
-		return next;
-	}
-	
     @Inject(method = "run", at = @At("HEAD"))
     public void preRun(CallbackInfo callbackInfo) {
     	
@@ -158,39 +130,6 @@ public abstract class MixinMinecraft implements IMixinMinecraft {
     	Glide.getInstance().stop();
     }
 
-	/**
-	 * @reason : let the shutdown sound play before killing the process
-	 * @param i : exit code
-	 */
-	@Redirect(method = "shutdownMinecraftApplet", at = @At(value = "INVOKE", target = "Ljava/lang/System;exit(I)V", remap = false))
-	private void ignoreGcCall(int i) {
-		try{Thread.sleep(2530);} catch (Exception ignored) {}
-		System.exit(i);
-	}
-
-    
-    @Inject(method = "runTick", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/Minecraft;dispatchKeypresses()V", shift = At.Shift.AFTER))
-    private void onKey(CallbackInfo ci) {
-        if (Keyboard.getEventKeyState() && Minecraft.getMinecraft().currentScreen == null) {
-        	new EventKey(Keyboard.getEventKey() == 0 ? Keyboard.getEventCharacter() + 256 : Keyboard.getEventKey()).call();
-        }
-    }
-
-	@Inject(method = "clickMouse", at = @At("HEAD"))
-	public void fixHitDelay(CallbackInfo ci) {
-		if(HitDelayFixMod.getInstance().isToggled()) {
-			leftClickCounter = 0;
-		}
-	}
-	
-	@Redirect(method = "runTick", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/particle/EffectRenderer;updateEffects()V"))
-	public void fixEffectRenderer(EffectRenderer effectRenderer) {
-		try {
-			effectRenderer.updateEffects();
-		}
-		catch(Exception e) {}
-	}
-	
     @Inject(method = "startGame", at = @At("TAIL"))
     private void disableGlErrorChecking(CallbackInfo ci) {
         this.enableGLErrorChecking = false;
@@ -219,7 +158,7 @@ public abstract class MixinMinecraft implements IMixinMinecraft {
                         effectRenderer.addBlockHitEffects(objectMouseOver.getBlockPos(), objectMouseOver.sideHit);
                     }
                     
-                    if (!thePlayer.isSwingInProgress || thePlayer.swingProgressInt >= ((IMixinEntityLivingBase) thePlayer).getArmSwingAnimation() / 2 || thePlayer.swingProgressInt < 0) {
+                    if (!thePlayer.isSwingInProgress || thePlayer.swingProgressInt >= ((IMixinEntityLivingBase) thePlayer).glide$getArmSwingAnimation() / 2 || thePlayer.swingProgressInt < 0) {
                         thePlayer.swingProgressInt = -1;
                         thePlayer.isSwingInProgress = true;
                     }
@@ -230,82 +169,41 @@ public abstract class MixinMinecraft implements IMixinMinecraft {
         }
     }
     
-    @Inject(method = "updateDisplay", at = @At("HEAD"))
-    public void onUpdateDisplay(CallbackInfo ci) {
-    	if(Glide.getInstance().getEventManager() != null) {
-    		new EventUpdateDisplay().call();
-    	}
-    }
-    
-	@Redirect(method = "createDisplay", at = @At(value = "INVOKE", target = "Lorg/lwjgl/opengl/Display;setTitle(Ljava/lang/String;)V"))
-	public void overrideTitle(String title) {
-		Display.setTitle("Glide Client v" + Glide.getInstance().getVersion() + " (" + Glide.getInstance().getVersionIdentifier() + ") for " + title);
+	@Inject(method = "createDisplay", at = @At("RETURN"))
+	private void setGlideWindowTitle(CallbackInfo ci) {
+		Display.setTitle("Glide Client v" + Glide.getInstance().getVersion() + " ("
+				+ Glide.getInstance().getVersionIdentifier() + ") for " + Display.getTitle());
 	}
 	
-    @Inject(method = "updateFramebufferSize", at = @At("HEAD"))
-    private void onUpdateFramebufferSize(CallbackInfo ci) {
-    	if(Glide.getInstance().getEventManager() != null) {
-        	new EventUpdateFramebufferSize().call();
-    	}
-    }
-    
-	@Redirect(method = "runTick", at = @At(value = "INVOKE", target = "Lorg/lwjgl/input/Mouse;getEventDWheel()I"))
-	public int onScroll() {
-		
-		int dWheel = Mouse.getEventDWheel();
-		
-		EventScrollMouse event = new EventScrollMouse(dWheel);
-		event.call();
-		
-		if(dWheel != 0) {
-			if(event.isCancelled()) {
-				dWheel = 0;
-			}
-		}
-
-		return dWheel;
-	}
-	
-	@Overwrite
-    public int getLimitFramerate() {
+	@Inject(method = "getLimitFramerate", at = @At("HEAD"), cancellable = true)
+    public void getLimitFramerate(CallbackInfoReturnable<Integer> cir) {
 		
 		FPSLimiterMod limiter = FPSLimiterMod.getInstance();
 		
-		if(limiter.isToggled()) {
+		if(limiter != null && limiter.isToggled()) {
 			
 			if(this.currentScreen == null && limiter.getLimitMaxFpsSetting().isToggled()) {
-				return limiter.getMaxFpsSetting().getValueInt();
+				cir.setReturnValue(limiter.getMaxFpsSetting().getValueInt());
 			} else if(this.currentScreen != null && limiter.getLimitGuiFps().isToggled()) {
-				return limiter.getGuiFpsSetting().getValueInt();
+				cir.setReturnValue(limiter.getGuiFpsSetting().getValueInt());
 			}
 		}
-		
-        return this.theWorld == null && this.currentScreen != null ? 60 : this.gameSettings.limitFramerate;
-    }
+	}
 	
-    @Overwrite
-    public boolean isFramerateLimitBelowMax() {
+    @Inject(method = "isFramerateLimitBelowMax", at = @At("HEAD"), cancellable = true)
+    public void isFramerateLimitBelowMax(CallbackInfoReturnable<Boolean> cir) {
     	
 		FPSLimiterMod limiter = FPSLimiterMod.getInstance();
 		
-    	if(limiter.isToggled() && limiter.getLimitMaxFpsSetting().isToggled()) {
-    		return true;
-    	}
-    	
-        return (float) this.getLimitFramerate() < GameSettings.Options.FRAMERATE_LIMIT.getValueMax();
+		if(limiter != null && limiter.isToggled() && limiter.getLimitMaxFpsSetting().isToggled()) {
+			cir.setReturnValue(true);
+	    }
     }
     
     @Inject(method = "drawSplashScreen", at = @At("HEAD"), cancellable = true)
     public void overrideSplash(TextureManager textureManagerInstance, CallbackInfo ci) {
     	new GuiSplashScreen().draw();
     	ci.cancel();
-    }
-    
-    @Inject(method = "displayGuiScreen", at = @At("RETURN"), cancellable = true)
-    public void displayGuiScreenInject(GuiScreen guiScreenIn, CallbackInfo ci) {
-    	if(guiScreenIn instanceof GuiMainMenu) {
-			displayGuiScreen(Glide.getInstance().getMainMenu());
-    	}
     }
     
     @Inject(method = "loadWorld(Lnet/minecraft/client/multiplayer/WorldClient;Ljava/lang/String;)V", at = @At("HEAD"))
@@ -326,15 +224,6 @@ public abstract class MixinMinecraft implements IMixinMinecraft {
 			c.cancel();
 		}
 	}
-    
-    @Redirect(method = "loadWorld(Lnet/minecraft/client/multiplayer/WorldClient;Ljava/lang/String;)V", at = @At(value = "INVOKE", target = "Ljava/lang/System;gc()V"))
-    private void optimizedWorldSwapping() {}
-    
-    @Redirect(method = "runGameLoop", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/stream/IStream;func_152935_j()V"))
-    private void skipTwitchCode1(IStream instance) {}
-
-    @Redirect(method = "runGameLoop", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/stream/IStream;func_152922_k()V"))
-    private void skipTwitchCode2(IStream instance) {}
     
     @ModifyArg(method = "launchIntegratedServer", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/Minecraft;displayGuiScreen(Lnet/minecraft/client/gui/GuiScreen;)V", ordinal = 1))
     private GuiScreen displayWorkingScreen(GuiScreen original) {
@@ -364,62 +253,51 @@ public abstract class MixinMinecraft implements IMixinMinecraft {
 		}
 	}
     
-    @Redirect(method = "clickMouse", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/entity/EntityPlayerSP;swingItem()V"))
-    private void redirectSwing() {
-    		thePlayer.swingItem();
-    }
-    
-    @Redirect(method = "clickMouse", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/multiplayer/PlayerControllerMP;attackEntity(Lnet/minecraft/entity/player/EntityPlayer;Lnet/minecraft/entity/Entity;)V"))
-    private void redirectAttack() {
-    		playerController.attackEntity(thePlayer, objectMouseOver.entityHit);
-    }
-    
-	@Overwrite
-	public static int getDebugFPS() {
-		
+	@Inject(method = "getDebugFPS", at = @At("HEAD"), cancellable = true)
+	private static void glide$getDebugFPS(CallbackInfoReturnable<Integer> cir) {
 		if(FPSSpooferMod.getInstance().isToggled()) {
-			return debugFPS * FPSSpooferMod.getInstance().getMultiplierSetting().getValueInt();
+			cir.setReturnValue(debugFPS * FPSSpooferMod.getInstance().getMultiplierSetting().getValueInt());
 		}
-		
-		return debugFPS;
 	}
 	
-    @Redirect(method = "runTick", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/EntityRenderer;loadEntityShader(Lnet/minecraft/entity/Entity;)V"))
-    private void keepShadersOnPerspectiveChange(EntityRenderer entityRenderer, Entity entityIn) {}
-    
 	@Override
-	public Timer getTimer() {
+	public Timer glide$getTimer() {
 		return timer;
 	}
 
 	@Override
-	public void setSession(Session session) {
+	public void glide$setSession(Session session) {
 		this.session = session;
 	}
 
 	@Override
-	public void callClickMouse() {
+	public void glide$callClickMouse() {
 		clickMouse();
 	}
 	
 	@Override
-	public void callRightClickMouse() {
+	public void glide$callRightClickMouse() {
 		rightClickMouse();
+	}
+
+	@Override
+	public void glide$setLeftClickCounter(int value) {
+		leftClickCounter = value;
 	}
 	
     @Override
-    public DefaultResourcePack getMcDefaultResourcePack() {
+    public DefaultResourcePack glide$getMcDefaultResourcePack() {
     	return this.mcDefaultResourcePack;
     }
     
     @Override
-    public Entity getRenderViewEntity() {
+    public Entity glide$getRenderViewEntity() {
     	return renderViewEntity;
     }
     
 	@Override
-	@Accessor
-	public abstract boolean isRunning();
+	@Accessor("running")
+	public abstract boolean glide$isRunning();
 	
 	@Inject(method = "startGame", at = @At(value = "INVOKE",
 			target = "Lnet/minecraft/client/resources/SkinManager;<init>(Lnet/minecraft/client/renderer/texture/TextureManager;Ljava/io/File;Lcom/mojang/authlib/minecraft/MinecraftSessionService;)V"))
@@ -525,7 +403,7 @@ public abstract class MixinMinecraft implements IMixinMinecraft {
 	}
 
 	@Override
-	public void resizeWindow(int width, int height) {
+	public void glide$resizeWindow(int width, int height) {
 		resize(width, height);
 	}
 

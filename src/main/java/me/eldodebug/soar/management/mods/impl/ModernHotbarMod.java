@@ -5,10 +5,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 
 import me.eldodebug.soar.Glide;
+import me.eldodebug.soar.logger.GlideLogger;
 import me.eldodebug.soar.management.color.AccentColor;
 import me.eldodebug.soar.management.event.EventTarget;
-import me.eldodebug.soar.management.event.impl.EventRender2D;
-import me.eldodebug.soar.management.event.impl.EventRenderExpBar;
 import me.eldodebug.soar.management.event.impl.EventRenderTooltip;
 import me.eldodebug.soar.management.language.TranslateText;
 import me.eldodebug.soar.management.mods.HUDMod;
@@ -26,6 +25,9 @@ import net.minecraft.item.ItemStack;
 
 public class ModernHotbarMod extends HUDMod {
 
+	private static ModernHotbarMod instance;
+	private boolean forgeRenderingFailed;
+
 	private SimpleAnimation animation = new SimpleAnimation(0.0F);
 	
 	private float barX, barY, barWidth, barHeight, selX;
@@ -40,20 +42,68 @@ public class ModernHotbarMod extends HUDMod {
 
 	public ModernHotbarMod() {
 		super(TranslateText.MODERN_HOTBAR, TranslateText.MODERN_HOTBAR_DESCRIPTION);
+		instance = this;
 		
 		this.setDraggable(false);
 	}
 
-	@EventTarget
-	public void onRender2D(EventRender2D event) {
-		
+	public static ModernHotbarMod getInstance() {
+		return instance;
+	}
+
+	@Override
+	public void onEnable() {
+		forgeRenderingFailed = false;
+		super.onEnable();
+	}
+
+	/**
+	 * Forge renders the experience element directly from GuiIngameForge, so
+	 * expose the same design decision used by the legacy internal event hook.
+	 */
+	public boolean shouldRenderVanillaExperience() {
+		return designSetting.getOption().getTranslate().equals(TranslateText.CHILL);
+	}
+
+	public boolean tryRenderForgeHotbar(float partialTicks) {
+		if (forgeRenderingFailed || this.isEditing()
+				|| !(mc.getRenderViewEntity() instanceof EntityPlayer)) {
+			return false;
+		}
+
 		NanoVGManager nvg = Glide.getInstance().getNanoVGManager();
+		if (nvg == null) {
+			return false;
+		}
+
+		try {
+			return renderHotbar(nvg, partialTicks);
+		} catch (VirtualMachineError error) {
+			throw error;
+		} catch (ThreadDeath death) {
+			throw death;
+		} catch (Throwable throwable) {
+			forgeRenderingFailed = true;
+			GlideLogger.getLogger().error(
+					"[GC/ERROR] Modern Hotbar rendering failed; retaining the Forge hotbar",
+					throwable);
+			return false;
+		}
+	}
+
+	@EventTarget
+	public void onRenderTooltip(EventRenderTooltip event) {
+		event.setCancelled(true);
+	}
+
+	private boolean renderHotbar(NanoVGManager nvg, float partialTicks) {
 		ScaledResolution sr = new ScaledResolution(mc);
 		Option option = designSetting.getOption();
-		if(this.isEditing()){return;}
-		
-		nvg.setupAndDraw(() -> drawNanoVG(nvg));
-		
+
+		if (!nvg.trySetupAndDraw(() -> drawNanoVG(nvg), true)) {
+			return false;
+		}
+
         if (mc.getRenderViewEntity() instanceof EntityPlayer) {
         	
             EntityPlayer entityplayer = (EntityPlayer) mc.getRenderViewEntity();
@@ -63,21 +113,25 @@ public class ModernHotbarMod extends HUDMod {
             GlStateManager.tryBlendFuncSeparate(770, 771, 1, 0);
             RenderHelper.enableGUIStandardItemLighting();
 
-            for (int j = 0; j < 9; ++j) {
-                int k = sr.getScaledWidth() / 2 - 90 + j * 20 + 2;
-                int l = sr.getScaledHeight() - 16 - 3;
-                
-            	if(option.getTranslate().equals(TranslateText.CHILL)) {
-                	l = l + 4;
-                }
-                
-                renderHotBarItem(j, k, l - 4, event.getPartialTicks(), entityplayer);
-            }
+			try {
+				for (int j = 0; j < 9; ++j) {
+					int k = sr.getScaledWidth() / 2 - 90 + j * 20 + 2;
+					int l = sr.getScaledHeight() - 16 - 3;
 
-            RenderHelper.disableStandardItemLighting();
-            GlStateManager.disableRescaleNormal();
-            GlStateManager.disableBlend();
+					if (option.getTranslate().equals(TranslateText.CHILL)) {
+						l = l + 4;
+					}
+
+					renderHotBarItem(j, k, l - 4, partialTicks, entityplayer);
+				}
+			} finally {
+				RenderHelper.disableStandardItemLighting();
+				GlStateManager.disableRescaleNormal();
+				GlStateManager.disableBlend();
+			}
         }
+
+		return true;
 	}
 	
     private void renderHotBarItem(int index, int xPos, int yPos, float partialTicks, EntityPlayer entityPlayer) {
@@ -88,7 +142,8 @@ public class ModernHotbarMod extends HUDMod {
 		if (itemstack != null) {
 			float take = (animTreatment) ? partialTicks / 2 : partialTicks;
 			float progress = (float)itemstack.animationsToGo - take;
-			if (progress > 0.0F) {
+			boolean pushedMatrix = progress > 0.0F;
+			if (pushedMatrix) {
 				// from betterhotbarmod
 				GlStateManager.pushMatrix();
 				GlStateManager.translate(xPos + 8, yPos + 12, 0.0F);
@@ -106,11 +161,13 @@ public class ModernHotbarMod extends HUDMod {
 				GlStateManager.translate(-(xPos + 8), -(yPos + 12), 0.0F);
 			}
 
-			mc.getRenderItem().renderItemAndEffectIntoGUI(itemstack, xPos, yPos);
-
-            if (progress > 0.0F) {
-                GlStateManager.popMatrix();
-            }
+			try {
+				mc.getRenderItem().renderItemAndEffectIntoGUI(itemstack, xPos, yPos);
+			} finally {
+				if (pushedMatrix) {
+					GlStateManager.popMatrix();
+				}
+			}
 
 			mc.getRenderItem().renderItemOverlays(mc.fontRendererObj, itemstack, xPos, yPos);
         }
@@ -181,16 +238,4 @@ public class ModernHotbarMod extends HUDMod {
         }
 	}
 	
-	@EventTarget
-	public void onRenderTooltip(EventRenderTooltip event) {
-		event.setCancelled(true);
-	}
-	
-	@EventTarget
-	public void onRenderExpBar(EventRenderExpBar event) {
-		
-		Option option = designSetting.getOption();
-		
-		event.setCancelled(!option.getTranslate().equals(TranslateText.CHILL));
-	}
 }

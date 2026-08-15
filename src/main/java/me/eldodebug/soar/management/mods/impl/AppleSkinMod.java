@@ -45,7 +45,7 @@ public class AppleSkinMod extends Mod {
         int right = scaledResolution.getScaledWidth() / 2 + 91;
         int top = scaledResolution.getScaledHeight() - 39;
 
-        this.generateHungerBarOffsets(right, 0, ((IMixinGuiIngame)mc.ingameGUI).getUpdateCounter());
+        this.generateHungerBarOffsets(right, 0, ((IMixinGuiIngame)mc.ingameGUI).glide$getUpdateCounter());
 
         this.drawSaturationOverlay(0, stats.getSaturationLevel(), 0, stats.getFoodLevel(), right, top, 1.0F);
 
@@ -97,7 +97,7 @@ public class AppleSkinMod extends Mod {
         float saturationLevel = stats.getSaturationLevel();
         int foodLevel = stats.getFoodLevel();
 
-        boolean shouldAnimatedFood = saturationLevel <= 0.0F && ((IMixinGuiIngame)mc.ingameGUI).getUpdateCounter() % (foodLevel * 3 + 1) == 0;
+        boolean shouldAnimatedFood = saturationLevel <= 0.0F && ((IMixinGuiIngame)mc.ingameGUI).glide$getUpdateCounter() % (foodLevel * 3 + 1) == 0;
 
         if (foodBarOffsets.size() != preferFoodBars) {
             foodBarOffsets.setSize(preferFoodBars);

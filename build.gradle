@@ -18,12 +18,14 @@ buildscript {
     dependencies {
         classpath 'net.minecraftforge.gradle:ForgeGradle:2.1-SNAPSHOT'
         classpath 'org.spongepowered:mixingradle:0.6-SNAPSHOT'
+        classpath 'com.github.jengelman.gradle.plugins:shadow:2.0.4'
     }
 }
 
 apply plugin: 'net.minecraftforge.gradle.forge'
 apply plugin: 'org.spongepowered.mixin'
 apply plugin: 'java'
+apply plugin: 'com.github.johnrengelman.shadow'
 
 version = "7.2-forge.1"
 group = "me.eldodebug"
@@ -60,20 +62,33 @@ configurations {
 }
 
 dependencies {
-    embed('org.spongepowered:mixin:0.7.11-SNAPSHOT') {
+    // Use the same Mixin line as current Forge client mods (NEU, PolyPatcher,
+    // and OneConfig). Embedding 0.7.11 causes their accessor mixins to be
+    // parsed by an older transformer and silently skipped.
+    embed('org.spongepowered:mixin:0.8.7') {
         exclude module: 'launchwrapper'
         exclude module: 'guava'
         exclude module: 'gson'
         exclude module: 'commons-io'
     }
+    embed 'org.ow2.asm:asm:9.7.1'
+    embed 'org.ow2.asm:asm-analysis:9.7.1'
+    embed 'org.ow2.asm:asm-commons:9.7.1'
+    embed 'org.ow2.asm:asm-tree:9.7.1'
+    embed 'org.ow2.asm:asm-util:9.7.1'
     embed(files('libs/lwjgl-soar.jar'))
     embed(files('libs/lwjgl-soar-natives.jar'))
+    testCompile 'junit:junit:4.13.2'
 }
 
 mixin {
     defaultObfuscationEnv = "searge"
-    add sourceSets.main, "mixins.soar.refmap.json"
 }
+
+// MixinGradle 0.6 schedules `add` in addition to its own source-set scan,
+// registering the same compile hook twice. Set the source-set extension
+// directly so the plugin configures the refmap once during afterEvaluate.
+sourceSets.main.ext.refMap = "mixins.soar.refmap.json"
 
 processResources {
     inputs.property "version", project.version
@@ -90,24 +105,55 @@ processResources {
 }
 
 jar {
-    dependsOn configurations.compile
-    from {
-        configurations.embed.collect {
-            it.isDirectory() ? it : zipTree(it)
-        }
-    }
-    exclude 'META-INF/*.RSA', 'META-INF/*.SF', 'META-INF/*.DSA'
     manifest.attributes(
-            "MixinConfigs": 'mixins.soar.json',
+            "TweakClass": 'me.eldodebug.soar.bootstrap.GlideMixinTweaker',
+            "TweakOrder": 1001,
             'FMLAT': 'soar_at.cfg',
-            "FMLCorePlugin": 'me.eldodebug.soar.forge.GlideLoadingPlugin',
-            "FMLCorePluginContainsFMLMod": true,
             "ModSide": 'CLIENT'
     )
 }
 
+shadowJar {
+    classifier = ''
+    configurations = [project.configurations.embed]
+    relocate('org.objectweb.asm', 'me.eldodebug.soar.internal.asm') {
+        exclude 'org.objectweb.asm.commons.Remapper'
+    }
+    mergeServiceFiles()
+    from {
+        sourceSets.main.output
+    }
+    exclude 'META-INF/*.RSA', 'META-INF/*.SF', 'META-INF/*.DSA'
+    // ForgeGradle 2.1's reobfuscator uses an ASM version that cannot parse
+    // the Java 9 module descriptor bundled by Mixin 0.8.x.
+    exclude 'module-info.class'
+    // These Java 16 ModLauncher adapters are unused on the 1.8.9
+    // LaunchWrapper runtime and cannot be parsed by ForgeGradle 2.1 either.
+    exclude 'org/spongepowered/asm/launch/MixinLaunchPlugin.class'
+    exclude 'org/spongepowered/asm/launch/MixinTransformationService.class'
+    exclude 'org/spongepowered/asm/launch/platform/container/ContainerHandleModLauncherEx*.class'
+    // Mixin's Forge bridge intentionally shares this API-compatible base
+    // type with Forge's FMLDeobfuscatingRemapper.
+    exclude 'org/objectweb/asm/commons/Remapper.class'
+    // The vanilla 1.8.9 LWJGL 2 jar seals the exact org.lwjgl package.
+    // Glide only needs the NanoVG/OpenCL subpackages from lwjgl-soar; do not
+    // ship its unrelated LWJGL 3 root-package classes into that sealed package.
+    exclude 'org/lwjgl/CLongBuffer.class'
+    exclude 'org/lwjgl/Version*.class'
+    exclude 'org/lwjgl/package-info.class'
+    manifest.inheritFrom jar.manifest
+}
+
 reobf {
-    jar {
+    shadowJar {
         mappingType = 'SEARGE'
     }
 }
+
+// The thin jar is not runnable because embedded Mixin/LWJGL dependencies are
+// intentionally supplied only by shadowJar. Do not publish an easy-to-misuse
+// second artifact.
+jar.enabled = false
+reobfJar.enabled = false
+
+build.dependsOn reobfShadowJar

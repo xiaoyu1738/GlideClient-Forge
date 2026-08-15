@@ -322,7 +322,7 @@ public class ChunkAtlas implements Iterable<ChunkTile> {
             return null;
         }
 
-        if (!((IMixinWorld)world).isLoaded(x, z, true)) {
+        if (!((IMixinWorld)world).glide$isLoaded(x, z, true)) {
             return null;
         }
 

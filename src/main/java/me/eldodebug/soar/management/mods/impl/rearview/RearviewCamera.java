@@ -61,10 +61,10 @@ public class RearviewCamera {
         
         w = mc.displayWidth;
         h = mc.displayHeight;
-        y = ((IMixinMinecraft)mc).getRenderViewEntity().rotationYaw;
-        py = ((IMixinMinecraft)mc).getRenderViewEntity().prevRotationYaw;
-        p = ((IMixinMinecraft)mc).getRenderViewEntity().rotationPitch;
-        pp = ((IMixinMinecraft)mc).getRenderViewEntity().prevRotationPitch;
+        y = ((IMixinMinecraft)mc).glide$getRenderViewEntity().rotationYaw;
+        py = ((IMixinMinecraft)mc).glide$getRenderViewEntity().prevRotationYaw;
+        p = ((IMixinMinecraft)mc).glide$getRenderViewEntity().rotationPitch;
+        pp = ((IMixinMinecraft)mc).glide$getRenderViewEntity().prevRotationPitch;
         hide = mc.gameSettings.hideGUI;
         view = mc.gameSettings.thirdPersonView;
         limit = mc.gameSettings.limitFramerate;
@@ -85,15 +85,15 @@ public class RearviewCamera {
         mc.gameSettings.limitFramerate = 0;
         mc.gameSettings.fovSetting = fov;
 
-        ((IMixinMinecraft)mc).getRenderViewEntity().rotationYaw += 180;
-        ((IMixinMinecraft)mc).getRenderViewEntity().prevRotationYaw += 180;
+        ((IMixinMinecraft)mc).glide$getRenderViewEntity().rotationYaw += 180;
+        ((IMixinMinecraft)mc).glide$getRenderViewEntity().prevRotationYaw += 180;
         
         if(lockCamera) {
-            ((IMixinMinecraft)mc).getRenderViewEntity().rotationPitch = 0;
-            ((IMixinMinecraft)mc).getRenderViewEntity().prevRotationPitch = 0;
+            ((IMixinMinecraft)mc).glide$getRenderViewEntity().rotationPitch = 0;
+            ((IMixinMinecraft)mc).glide$getRenderViewEntity().prevRotationPitch = 0;
         }else {
-            ((IMixinMinecraft)mc).getRenderViewEntity().rotationPitch = -p + 18;
-            ((IMixinMinecraft)mc).getRenderViewEntity().prevRotationPitch = -pp + 18;
+            ((IMixinMinecraft)mc).glide$getRenderViewEntity().rotationPitch = -p + 18;
+            ((IMixinMinecraft)mc).glide$getRenderViewEntity().prevRotationPitch = -pp + 18;
         }
 
         recording = true;
@@ -101,7 +101,7 @@ public class RearviewCamera {
 
         GL11.glPushAttrib(272393);
         
-        mc.entityRenderer.renderWorld(((IMixinMinecraft)mc).getTimer().renderPartialTicks, System.nanoTime());
+        mc.entityRenderer.renderWorld(((IMixinMinecraft)mc).glide$getTimer().renderPartialTicks, System.nanoTime());
         mc.entityRenderer.setupOverlayRendering();
         
         if (limit != 0) {
@@ -114,10 +114,10 @@ public class RearviewCamera {
         recording = false;
         
         mc.currentScreen = currentScreen;
-        ((IMixinMinecraft)mc).getRenderViewEntity().rotationYaw = y;
-        ((IMixinMinecraft)mc).getRenderViewEntity().prevRotationYaw = py;
-        ((IMixinMinecraft)mc).getRenderViewEntity().rotationPitch = p;
-        ((IMixinMinecraft)mc).getRenderViewEntity().prevRotationPitch = pp;
+        ((IMixinMinecraft)mc).glide$getRenderViewEntity().rotationYaw = y;
+        ((IMixinMinecraft)mc).glide$getRenderViewEntity().prevRotationYaw = py;
+        ((IMixinMinecraft)mc).glide$getRenderViewEntity().rotationPitch = p;
+        ((IMixinMinecraft)mc).glide$getRenderViewEntity().prevRotationPitch = pp;
         mc.gameSettings.limitFramerate = limit;
         mc.gameSettings.thirdPersonView = view;
         mc.gameSettings.hideGUI = hide;

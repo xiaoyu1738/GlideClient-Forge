@@ -13,8 +13,15 @@ import net.minecraft.entity.boss.BossStatus;
 
 public class BossHealthMod extends HUDMod {
 
+	private static BossHealthMod instance;
+
 	public BossHealthMod() {
 		super(TranslateText.BOSS_HEALTH, TranslateText.BOSS_HEALTH_DESCRIPTION);
+		instance = this;
+	}
+
+	public static BossHealthMod getInstance() {
+		return instance;
 	}
 
 	@EventTarget

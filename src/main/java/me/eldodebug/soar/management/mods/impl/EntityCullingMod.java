@@ -217,7 +217,7 @@ public class EntityCullingMod extends Mod {
             GL15.glBeginQuery(mode, query.nextQuery);
             drawSelectionBoundingBox(entity.getEntityBoundingBox()
                     .expand(.2, .2, .2)
-                    .offset(-((IMixinRenderManager)renderManager).getRenderPosX(), -((IMixinRenderManager)renderManager).getRenderPosY(), -((IMixinRenderManager)renderManager).getRenderPosZ())
+                    .offset(-((IMixinRenderManager)renderManager).glide$getRenderPosX(), -((IMixinRenderManager)renderManager).glide$getRenderPosY(), -((IMixinRenderManager)renderManager).glide$getRenderPosZ())
             );
             GL15.glEndQuery(mode);
         }

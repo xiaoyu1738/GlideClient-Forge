@@ -71,6 +71,10 @@ public class ArrayHelper<T> implements Iterable<T> {
 		return (T[]) this.elements;
 	}
 
+	public Object[] snapshot() {
+		return this.elements.clone();
+	}
+
 	public int size() {
 		return this.array().length;
 	}

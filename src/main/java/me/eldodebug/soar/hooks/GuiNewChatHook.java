@@ -18,7 +18,7 @@ public class GuiNewChatHook {
 		
 		IMixinChatLine hook = (IMixinChatLine) line;
 		
-		NetworkPlayerInfo networkPlayerInfo = hook.getPlayerInfo();
+		NetworkPlayerInfo networkPlayerInfo = hook.glide$getPlayerInfo();
 		
 		actualX += networkPlayerInfo != null ? 10f : 0;
 		

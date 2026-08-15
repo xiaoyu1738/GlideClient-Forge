@@ -2,6 +2,7 @@ package me.eldodebug.soar.management.mods.impl;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 
 import me.eldodebug.soar.Glide;
 import me.eldodebug.soar.management.event.EventTarget;
@@ -26,7 +27,7 @@ public class PotionStatusMod extends HUDMod {
 	
 	private BooleanSetting compactSetting = new BooleanSetting(TranslateText.COMPACT, this, false);
 	
-	private Collection<PotionEffect> potions;
+	private Collection<PotionEffect> potions = Collections.emptyList();
 	
 	public PotionStatusMod() {
 		super(TranslateText.POTION_STATUS, TranslateText.POTION_STATUS_DESCRIPTION);

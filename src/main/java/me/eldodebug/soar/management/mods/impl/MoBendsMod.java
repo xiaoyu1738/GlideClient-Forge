@@ -31,7 +31,7 @@ public class MoBendsMod extends Mod {
 	
     public List<UUID> currentlyRenderedEntities = new ArrayList<UUID>();
     
-	private boolean loaded, renderingGuiScreen;
+	private boolean loaded;
 	
 	private BooleanSetting customColorSetting = new BooleanSetting(TranslateText.CUSTOM_COLOR, this, false);
 	private ColorSetting colorSetting = new ColorSetting(TranslateText.COLOR, this, Color.RED, false);
@@ -41,7 +41,6 @@ public class MoBendsMod extends Mod {
 		
 		instance = this;
 		loaded = false;
-		renderingGuiScreen = false;
 	}
 
 	@EventTarget
@@ -52,7 +51,7 @@ public class MoBendsMod extends Mod {
 		}
 		
         for(int i = 0;i < Data_Player.dataList.size();i++){
-            Data_Player.dataList.get(i).update(((IMixinMinecraft)mc).getTimer().renderPartialTicks);
+            Data_Player.dataList.get(i).update(((IMixinMinecraft)mc).glide$getTimer().renderPartialTicks);
         }
 	}
 	
@@ -152,11 +151,4 @@ public class MoBendsMod extends Mod {
 		return customColorSetting;
 	}
 
-	public boolean isRenderingGuiScreen() {
-		return renderingGuiScreen;
-	}
-
-	public void setRenderingGuiScreen(boolean renderingGuiScreen) {
-		this.renderingGuiScreen = renderingGuiScreen;
-	}
 }

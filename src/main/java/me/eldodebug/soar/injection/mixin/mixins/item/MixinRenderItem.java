@@ -1,16 +1,13 @@
 package me.eldodebug.soar.injection.mixin.mixins.item;
 
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import me.eldodebug.soar.management.mods.impl.GlintColorMod;
 import me.eldodebug.soar.management.mods.impl.ShinyPotsMod;
-import me.eldodebug.soar.utils.EnumFacings;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.renderer.GlStateManager;
@@ -19,7 +16,6 @@ import net.minecraft.client.renderer.texture.TextureManager;
 import net.minecraft.client.renderer.texture.TextureMap;
 import net.minecraft.client.resources.model.IBakedModel;
 import net.minecraft.item.ItemStack;
-import net.minecraft.util.EnumFacing;
 import net.minecraft.util.ResourceLocation;
 
 @Mixin(RenderItem.class)
@@ -31,8 +27,12 @@ public abstract class MixinRenderItem {
 	@Shadow
     private TextureManager textureManager;
 	
-	@Overwrite
-    private void renderEffect(IBakedModel model){
+	@Inject(method = "renderEffect", at = @At("HEAD"), cancellable = true)
+    private void glide$renderEffect(IBakedModel model, CallbackInfo ci){
+
+		if (!GlintColorMod.getInstance().isToggled() && !ShinyPotsMod.getInstance().isToggled()) {
+			return;
+		}
 		
         int color = -8372020; 
         
@@ -74,6 +74,7 @@ public abstract class MixinRenderItem {
         
         GlStateManager.depthMask(true);
         this.textureManager.bindTexture(TextureMap.locationBlocksTexture);
+        ci.cancel();
     }
 	
 	@Inject(method = "renderItemAndEffectIntoGUI", at = @At("HEAD"))
@@ -85,9 +86,4 @@ public abstract class MixinRenderItem {
 	public void preRenderItemOverlayIntoGUIhead(FontRenderer fr, ItemStack stack, int xPosition, int yPosition, String text, CallbackInfo ci) {
         GlStateManager.enableDepth();
 	}
-	
-    @Redirect(method = "renderModel(Lnet/minecraft/client/resources/model/IBakedModel;ILnet/minecraft/item/ItemStack;)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/util/EnumFacing;values()[Lnet/minecraft/util/EnumFacing;"))
-    private EnumFacing[] renderModel$getCachedArray() {
-        return EnumFacings.FACINGS;
-    }
 }

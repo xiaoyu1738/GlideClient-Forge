@@ -50,13 +50,13 @@ public class BlurUtils {
         lastScaleWidth = factor2;
         lastScaleHeight = factor3;
         
-        ((IMixinShaderGroup)blurShader).getListShaders().get(0).getShaderManager().getShaderUniform("BlurXY").set(x * (sr.getScaleFactor() / 2.0F), (factor3 - height) * (sr.getScaleFactor() / 2.0F));
-        ((IMixinShaderGroup)blurShader).getListShaders().get(1).getShaderManager().getShaderUniform("BlurXY").set(x * (sr.getScaleFactor() / 2.0F), (factor3 - height) * (sr.getScaleFactor() / 2.0F));
-        ((IMixinShaderGroup)blurShader).getListShaders().get(0).getShaderManager().getShaderUniform("BlurCoord").set((width - x) * (sr.getScaleFactor() / 2.0F), (height - y) * (sr.getScaleFactor() / 2.0F));
-        ((IMixinShaderGroup)blurShader).getListShaders().get(1).getShaderManager().getShaderUniform("BlurCoord").set((width - x) * (sr.getScaleFactor() / 2.0F), (height - y) * (sr.getScaleFactor() / 2.0F));
-        ((IMixinShaderGroup)blurShader).getListShaders().get(0).getShaderManager().getShaderUniform("Radius").set(radius);
-        ((IMixinShaderGroup)blurShader).getListShaders().get(1).getShaderManager().getShaderUniform("Radius").set(radius);
-        blurShader.loadShaderGroup(((IMixinMinecraft)mc).getTimer().renderPartialTicks);
+        ((IMixinShaderGroup)blurShader).glide$getListShaders().get(0).getShaderManager().getShaderUniform("BlurXY").set(x * (sr.getScaleFactor() / 2.0F), (factor3 - height) * (sr.getScaleFactor() / 2.0F));
+        ((IMixinShaderGroup)blurShader).glide$getListShaders().get(1).getShaderManager().getShaderUniform("BlurXY").set(x * (sr.getScaleFactor() / 2.0F), (factor3 - height) * (sr.getScaleFactor() / 2.0F));
+        ((IMixinShaderGroup)blurShader).glide$getListShaders().get(0).getShaderManager().getShaderUniform("BlurCoord").set((width - x) * (sr.getScaleFactor() / 2.0F), (height - y) * (sr.getScaleFactor() / 2.0F));
+        ((IMixinShaderGroup)blurShader).glide$getListShaders().get(1).getShaderManager().getShaderUniform("BlurCoord").set((width - x) * (sr.getScaleFactor() / 2.0F), (height - y) * (sr.getScaleFactor() / 2.0F));
+        ((IMixinShaderGroup)blurShader).glide$getListShaders().get(0).getShaderManager().getShaderUniform("Radius").set(radius);
+        ((IMixinShaderGroup)blurShader).glide$getListShaders().get(1).getShaderManager().getShaderUniform("Radius").set(radius);
+        blurShader.loadShaderGroup(((IMixinMinecraft)mc).glide$getTimer().renderPartialTicks);
         mc.getFramebuffer().bindFramebuffer(true);
     }
 }

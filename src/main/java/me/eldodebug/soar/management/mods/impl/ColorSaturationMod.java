@@ -64,7 +64,7 @@ public class ColorSaturationMod extends Mod {
 		}
 		
 		if(prevHue != hue || prevSaturation != saturation || prevBrightness != brightness || prevContrast != contrast) {
-			((IMixinShaderGroup) group).getListShaders().forEach((shader) -> {
+			((IMixinShaderGroup) group).glide$getListShaders().forEach((shader) -> {
 				
 				ShaderUniform hueUniform = shader.getShaderManager().getShaderUniform("hue");
 				ShaderUniform contrastUniform = shader.getShaderManager().getShaderUniform("Contrast");
