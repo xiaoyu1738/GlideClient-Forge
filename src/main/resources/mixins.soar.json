@@ -43,7 +43,6 @@
     "layer.MixinLayerHeldItem",
     "layer.MixinLayerSpiderEyes",
     "layer.MixinLayerWitherAura",
-    "lwjgl.MixinWindowsDisplay",
     "model.MixinModelBox",
     "model.MixinModelPlayer",
     "multiplayer.MixinPlayerControllerMP",

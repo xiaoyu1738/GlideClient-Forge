@@ -62,20 +62,35 @@ public class DamageParticlesMod extends Mod {
 			return;
 		}
 
-		if (!healthMap.containsKey(entity)) {
-			healthMap.put(entity, entity.getHealth());
+		float after = entity.getHealth();
+		Float previousHealth = healthMap.get(entity);
+
+		// Other transformers can expose entities while their health field is in
+		// a transient invalid state. Do not let one bad sample disable this mod.
+		if (!MathUtils.isFinite(after)) {
+			healthMap.remove(entity);
+			return;
 		}
 
-		float before = healthMap.get(entity);
-		float after = entity.getHealth();
+		if (previousHealth == null || !MathUtils.isFinite(previousHealth)) {
+			healthMap.put(entity, after);
+			return;
+		}
+
+		float before = previousHealth;
+		float difference = before - after;
+		if (!MathUtils.isFinite(difference)) {
+			healthMap.put(entity, after);
+			return;
+		}
 
 		if (before != after) {
 			String text;
 
-			if ((before - after) < 0) {
-				text = EnumChatFormatting.GREEN + "" + MathUtils.roundToPlace((before - after) * -1, 1);
+			if (difference < 0) {
+				text = EnumChatFormatting.GREEN + "" + MathUtils.roundToPlace(difference * -1, 1);
 			} else {
-				text = EnumChatFormatting.YELLOW + "" + MathUtils.roundToPlace((before - after), 1);
+				text = EnumChatFormatting.YELLOW + "" + MathUtils.roundToPlace(difference, 1);
 			}
 
 			LocationUtils location = new LocationUtils(entity);
@@ -88,9 +103,9 @@ public class DamageParticlesMod extends Mod {
 
 			particles.add(new Particle(location, text));
 
-			healthMap.remove(entity);
-			healthMap.put(entity, entity.getHealth());
 		}
+
+		healthMap.put(entity, after);
 	}
 	
 	@EventTarget

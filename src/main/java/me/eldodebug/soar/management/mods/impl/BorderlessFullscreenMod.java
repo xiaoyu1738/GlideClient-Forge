@@ -12,6 +12,7 @@ import me.eldodebug.soar.management.event.impl.EventToggleFullscreen;
 import me.eldodebug.soar.management.language.TranslateText;
 import me.eldodebug.soar.management.mods.Mod;
 import me.eldodebug.soar.management.mods.ModCategory;
+import me.eldodebug.soar.platform.PlatformUtils;
 
 public class BorderlessFullscreenMod extends Mod {
 
@@ -36,6 +37,10 @@ public class BorderlessFullscreenMod extends Mod {
 	
 	@EventTarget
 	public void onFullscreenToggle(EventToggleFullscreen event) {
+		if(!PlatformUtils.supportsBorderlessFullscreen()) {
+			return;
+		}
+
 		event.setApplyState(false);
 		setBorderlessFullscreen(event.getState());
 	}
@@ -44,7 +49,7 @@ public class BorderlessFullscreenMod extends Mod {
 	public void onEnable() {
 		super.onEnable();
 		
-		if(mc.isFullScreen()) {
+		if(PlatformUtils.supportsBorderlessFullscreen() && mc.isFullScreen()) {
 			setBorderlessFullscreen(true);
 		}
 	}
@@ -52,6 +57,9 @@ public class BorderlessFullscreenMod extends Mod {
 	@Override
 	public void onDisable() {
 		super.onDisable();
+		if(!PlatformUtils.supportsBorderlessFullscreen()) {
+			return;
+		}
 		
 		if(mc.isFullScreen()) {
 			setBorderlessFullscreen(false);
@@ -87,7 +95,7 @@ public class BorderlessFullscreenMod extends Mod {
 			}
 		}
 		catch(LWJGLException error) {
-			GlideLogger.error("Could not totggle borderless fullscreen", error);
+			GlideLogger.error("Could not toggle borderless fullscreen", error);
 		}
 	}
 }

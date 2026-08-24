@@ -8,7 +8,11 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
     permissions:
       contents: read
 
@@ -21,12 +25,17 @@ jobs:
         java-version: 8
         cache: "gradle"
 
-    - name: Build Forge mod
+    - name: Build Forge mod (Linux)
+      if: runner.os == 'Linux'
       run: chmod +x ./gradlew && ./gradlew clean build --console=plain
+
+    - name: Build Forge mod (Windows)
+      if: runner.os == 'Windows'
+      run: .\gradlew.bat clean build --console=plain
 
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: GlideClient-Forge
+        name: GlideClient-Forge-${{ runner.os }}
         path: build/libs/GlideClient-Forge-*.jar
         if-no-files-found: error

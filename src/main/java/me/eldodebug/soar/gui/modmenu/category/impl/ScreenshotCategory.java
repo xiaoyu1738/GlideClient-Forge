@@ -1,8 +1,5 @@
 package me.eldodebug.soar.gui.modmenu.category.impl;
 
-import java.awt.Desktop;
-import java.io.IOException;
-
 import me.eldodebug.soar.Glide;
 import me.eldodebug.soar.gui.modmenu.GuiModMenu;
 import me.eldodebug.soar.gui.modmenu.category.Category;
@@ -19,6 +16,7 @@ import me.eldodebug.soar.management.screenshot.ScreenshotManager;
 import me.eldodebug.soar.utils.ColorUtils;
 import me.eldodebug.soar.utils.animation.simple.SimpleAnimation;
 import me.eldodebug.soar.utils.mouse.MouseUtils;
+import me.eldodebug.soar.utils.file.FileUtils;
 import org.lwjgl.input.Keyboard;
 
 public class ScreenshotCategory extends Category {
@@ -189,9 +187,7 @@ public class ScreenshotCategory extends Category {
 		}
 		
 		if(inside && !trash && mouseButton == 0 && currentScreenshot != null) {
-			try {
-				Desktop.getDesktop().open(currentScreenshot.getImage());
-			} catch (IOException e) {}
+			FileUtils.openFile(currentScreenshot.getImage());
 		}
 		
 		if(currentScreenshot != null && mouseButton == 0) {

@@ -3,6 +3,7 @@ package me.eldodebug.soar.bootstrap;
 import java.io.File;
 import java.lang.reflect.Method;
 import java.util.List;
+import java.util.Locale;
 
 import net.minecraft.launchwrapper.ITweaker;
 import net.minecraft.launchwrapper.Launch;
@@ -22,6 +23,7 @@ public final class GlideMixinTweaker implements ITweaker {
     private static final String MIXIN_CONFIG_SOURCE =
             "org.spongepowered.asm.mixin.extensibility.IMixinConfigSource";
     private static final String MIXIN_CONFIG = "mixins.soar.json";
+    private static final String WINDOWS_MIXIN_CONFIG = "mixins.soar.windows.json";
 
     private final ITweaker delegate;
 
@@ -46,7 +48,18 @@ public final class GlideMixinTweaker implements ITweaker {
     public void injectIntoClassLoader(LaunchClassLoader classLoader) {
         ForgeMixinBootstrap.prepare(classLoader);
         delegate.injectIntoClassLoader(classLoader);
-        registerMixinConfiguration();
+        registerMixinConfiguration(MIXIN_CONFIG);
+        boolean windows = isWindows();
+        boolean wayland = isWaylandSession();
+        net.minecraft.launchwrapper.LogWrapper.info(
+                "Glide platform bootstrap detected os=%s, wayland=%s",
+                System.getProperty("os.name", "unknown"), wayland);
+        if (windows) {
+            registerMixinConfiguration(WINDOWS_MIXIN_CONFIG);
+        } else {
+            net.minecraft.launchwrapper.LogWrapper.info(
+                    "Glide skipped Windows-only Mixin configuration");
+        }
     }
 
     @Override
@@ -59,7 +72,7 @@ public final class GlideMixinTweaker implements ITweaker {
         return delegate.getLaunchArguments();
     }
 
-    private void registerMixinConfiguration() {
+    private void registerMixinConfiguration(String config) {
         try {
             ClassLoader mixinClassLoader = delegate.getClass().getClassLoader();
             Class<?> mixinsClass = Class.forName(MIXINS, true, mixinClassLoader);
@@ -67,11 +80,24 @@ public final class GlideMixinTweaker implements ITweaker {
                     MIXIN_CONFIG_SOURCE, true, mixinClassLoader);
             Method addConfiguration = mixinsClass.getMethod(
                     "addConfiguration", String.class, configSourceClass);
-            addConfiguration.invoke(null, MIXIN_CONFIG, null);
+            addConfiguration.invoke(null, config, null);
             net.minecraft.launchwrapper.LogWrapper.info(
-                    "Glide registered Mixin configuration %s", MIXIN_CONFIG);
+                    "Glide registered Mixin configuration %s", config);
         } catch (ReflectiveOperationException e) {
             throw new IllegalStateException("Unable to register Glide Mixins", e);
         }
+    }
+
+    private static boolean isWindows() {
+        return System.getProperty("os.name", "").toLowerCase(Locale.ROOT).contains("win");
+    }
+
+    private static boolean isWaylandSession() {
+        String sessionType = System.getenv("XDG_SESSION_TYPE");
+        if (sessionType != null && "wayland".equalsIgnoreCase(sessionType.trim())) {
+            return true;
+        }
+        String display = System.getenv("WAYLAND_DISPLAY");
+        return display != null && !display.trim().isEmpty();
     }
 }

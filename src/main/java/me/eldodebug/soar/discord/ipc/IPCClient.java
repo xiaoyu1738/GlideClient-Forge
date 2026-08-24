@@ -51,6 +51,7 @@ public final class IPCClient implements Closeable {
         pipe = null;
 
         pipe = Pipe.openPipe(this, clientId, callbacks, preferredOrder);
+        pipe.setListener(listener);
 
         LOGGER.debug("Client is now connected and ready!");
         

@@ -1,0 +1,9 @@
+{
+  "minVersion": "0.8.5",
+  "package": "me.eldodebug.soar.injection.mixin.mixins",
+  "refmap": "mixins.soar.refmap.json",
+  "compatibilityLevel": "JAVA_8",
+  "mixins": [
+    "lwjgl.MixinWindowsDisplay"
+  ]
+}

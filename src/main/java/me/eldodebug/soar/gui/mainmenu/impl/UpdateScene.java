@@ -6,6 +6,7 @@ import java.net.URI;
 import me.eldodebug.soar.gui.mainmenu.GuiGlideMainMenu;
 import me.eldodebug.soar.management.remote.update.Update;
 import me.eldodebug.soar.utils.mouse.MouseUtils;
+import me.eldodebug.soar.utils.file.FileUtils;
 import net.minecraft.client.gui.GuiSelectWorld;
 import org.lwjgl.input.Keyboard;
 
@@ -68,7 +69,7 @@ public class UpdateScene extends MainMenuScene {
 			int acY = sr.getScaledHeight() / 2 - (acHeight / 2);
 			Glide instance = Glide.getInstance();
 			if (MouseUtils.isInside(mouseX, mouseY, acX + acWidth/2 - 90, acY + acHeight - 64, 180, 20)) {
-				try{ Desktop.getDesktop().browse(new URI(instance.getUpdateInstance().getUpdateLink())); } catch (Exception ignored) {}
+				try{ FileUtils.openURI(new URI(instance.getUpdateInstance().getUpdateLink())); } catch (Exception ignored) {}
 			}
 			if (MouseUtils.isInside(mouseX, mouseY, acX + acWidth/2 - 90, acY + acHeight - 32, 180, 20)) {
 				exitGui();

@@ -27,7 +27,7 @@ apply plugin: 'org.spongepowered.mixin'
 apply plugin: 'java'
 apply plugin: 'com.github.johnrengelman.shadow'
 
-version = "7.2-forge.1"
+version = "7.2-forge.2"
 group = "me.eldodebug"
 archivesBaseName = "GlideClient-Forge"
 
@@ -90,6 +90,16 @@ mixin {
 // directly so the plugin configures the refmap once during afterEvaluate.
 sourceSets.main.ext.refMap = "mixins.soar.refmap.json"
 
+// Runtime smoke automation is packaged as a separate Forge mod and is never
+// included in the distributable Glide jar.
+sourceSets {
+    smoke {
+        java.srcDir 'src/smoke/java'
+        compileClasspath = sourceSets.main.compileClasspath
+        runtimeClasspath = output + compileClasspath
+    }
+}
+
 processResources {
     inputs.property "version", project.version
     inputs.property "mcversion", "1.8.9"
@@ -101,6 +111,11 @@ processResources {
 
     from(sourceSets.main.resources.srcDirs) {
         exclude "mcmod.info"
+    }
+
+    from(rootProject.file('LICENSE')) {
+        into 'META-INF/licenses'
+        rename { 'GlideClient-GPLv3.txt' }
     }
 }
 
@@ -141,6 +156,14 @@ shadowJar {
     exclude 'org/lwjgl/CLongBuffer.class'
     exclude 'org/lwjgl/Version*.class'
     exclude 'org/lwjgl/package-info.class'
+    // The custom native bundle also contains Yoga and Zstd, but Glide only
+    // uses the LWJGL core, NanoVG, and STB bindings. Native libraries are
+    // stored below platform/<arch>/org/lwjgl/{yoga,zstd}, unlike the Java
+    // bindings which live below org/lwjgl/util/.
+    exclude '**/org/lwjgl/util/yoga/**'
+    exclude '**/org/lwjgl/util/zstd/**'
+    exclude '**/org/lwjgl/yoga/**'
+    exclude '**/org/lwjgl/zstd/**'
     manifest.inheritFrom jar.manifest
 }
 
@@ -157,3 +180,74 @@ jar.enabled = false
 reobfJar.enabled = false
 
 build.dependsOn reobfShadowJar
+
+task smokeJar(type: Jar, dependsOn: smokeClasses) {
+    baseName = 'GlideClient-Forge-Smoke'
+    version = project.version
+    from sourceSets.smoke.output
+}
+
+task verifyReleaseJar(dependsOn: reobfShadowJar) {
+    doLast {
+        File artifact = shadowJar.archivePath
+        if (!artifact.isFile()) {
+            throw new GradleException("Release artifact was not created: ${artifact}")
+        }
+
+        java.util.jar.JarFile releaseJar = new java.util.jar.JarFile(artifact)
+        try {
+            List<String> requiredEntries = [
+                    'mcmod.info',
+                    'mixins.soar.json',
+                    'mixins.soar.windows.json',
+                    'mixins.soar.refmap.json',
+                    'META-INF/licenses/ASM.txt',
+                    'META-INF/licenses/GlideClient-GPLv3.txt',
+                    'META-INF/licenses/LWJGL.txt',
+                    'META-INF/licenses/Mixin.txt',
+                    'META-INF/licenses/NanoVG.txt',
+                    'META-INF/licenses/stb.txt',
+                    'me/eldodebug/soar/bootstrap/GlideMixinTweaker.class',
+                    'me/eldodebug/soar/discord/ipc/entities/pipe/UnixPipe.class',
+                    'me/eldodebug/soar/platform/PlatformUtils.class'
+            ]
+            requiredEntries.each { entry ->
+                if (releaseJar.getEntry(entry) == null) {
+                    throw new GradleException("Release artifact is missing ${entry}")
+                }
+            }
+
+            Set<String> names = new HashSet<>()
+            releaseJar.entries().each { entry ->
+                String name = entry.name
+                if (!names.add(name)) {
+                    throw new GradleException("Release artifact contains duplicate entry ${name}")
+                }
+                if (name.startsWith('me/eldodebug/soar/smoke/')
+                        || name.endsWith('Test.class')) {
+                    throw new GradleException("Release artifact contains test-only entry ${name}")
+                }
+                String normalizedName = name.startsWith('/') ? name.substring(1) : name
+                if (normalizedName.contains('org/lwjgl/util/yoga/')
+                        || normalizedName.contains('org/lwjgl/util/zstd/')
+                        || normalizedName.contains('org/lwjgl/yoga/')
+                        || normalizedName.contains('org/lwjgl/zstd/')) {
+                    throw new GradleException("Release artifact contains unused native entry ${name}")
+                }
+            }
+
+            java.util.jar.Attributes attributes = releaseJar.manifest.mainAttributes
+            if (attributes.getValue('TweakClass')
+                    != 'me.eldodebug.soar.bootstrap.GlideMixinTweaker') {
+                throw new GradleException('Release artifact has an invalid TweakClass manifest entry')
+            }
+            if (attributes.getValue('ModSide') != 'CLIENT') {
+                throw new GradleException('Release artifact must be marked client-only')
+            }
+        } finally {
+            releaseJar.close()
+        }
+    }
+}
+
+check.dependsOn verifyReleaseJar

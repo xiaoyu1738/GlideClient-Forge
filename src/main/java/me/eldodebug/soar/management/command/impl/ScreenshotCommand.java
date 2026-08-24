@@ -1,14 +1,13 @@
 package me.eldodebug.soar.management.command.impl;
 
-import java.awt.Desktop;
 import java.awt.Toolkit;
 import java.io.File;
-import java.io.IOException;
 
 import me.eldodebug.soar.Glide;
 import me.eldodebug.soar.management.command.Command;
 import me.eldodebug.soar.management.file.FileManager;
 import me.eldodebug.soar.utils.transferable.FileTransferable;
+import me.eldodebug.soar.utils.file.FileUtils;
 import net.minecraft.util.ChatComponentText;
 
 public class ScreenshotCommand extends Command {
@@ -19,21 +18,16 @@ public class ScreenshotCommand extends Command {
 
 	@Override
 	public void onCommand(String message) {
-		
-		FileManager fileManager = Glide.getInstance().getFileManager();
 		String[] args = message.split(" ");
-		File file = new File(fileManager.getScreenshotDir(), args[1]);
-		
-		if(args.length < 1) {
+		if(args.length < 2) {
 			return;
 		}
+
+		FileManager fileManager = Glide.getInstance().getFileManager();
+		File file = new File(fileManager.getScreenshotDir(), args[1]);
 		
 		if(args[0].equals("open")) {
-			try {
-				Desktop.getDesktop().open(file);
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
+			FileUtils.openFile(file);
 		}
 		
 		if(args[0].equals("copy")) {

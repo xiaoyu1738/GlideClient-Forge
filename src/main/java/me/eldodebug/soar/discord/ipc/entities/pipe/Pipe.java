@@ -13,8 +13,13 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.IdentityHashMap;
+import java.util.Set;
 import java.util.UUID;
+
+import me.eldodebug.soar.platform.PlatformUtils;
 
 public abstract class Pipe {
 
@@ -42,10 +47,12 @@ public abstract class Pipe {
         Pipe[] open = new Pipe[DiscordBuild.values().length];
         
         for(int i = 0; i < 10; i++) {
+            Pipe candidate = null;
+            String location = getPipeLocation(i);
             try {
-                String location = getPipeLocation(i);
                 LOGGER.debug(String.format("Searching for IPC: %s", location));
-                pipe = createPipe(ipcClient, callbacks, location);
+                candidate = createPipe(ipcClient, callbacks, location);
+                pipe = candidate;
 
                 JsonObject handshakeJson = new JsonObject();
                 handshakeJson.addProperty("v", VERSION);
@@ -83,6 +90,8 @@ public abstract class Pipe {
                 pipe = null;
             }
             catch(Exception ex) {
+                LOGGER.debug("Discord IPC candidate failed at " + location, ex);
+                closeQuietly(candidate);
                 pipe = null;
             }
         }
@@ -110,24 +119,12 @@ public abstract class Pipe {
                 }
             }
             if(pipe == null) {
+                closeOpenPipes(open, null);
                 throw new NoDiscordClientException();
             }
         }
-        
-        for(int i = 0; i < open.length; i++) {
-        	
-            if(i == DiscordBuild.ANY.ordinal()) {
-                continue;
-            }
-            
-            if(open[i] != null) {
-                try {
-                    open[i].close();
-                } catch(Exception ex) {
-                    LOGGER.debug("Failed to close an open IPC pipe!", ex);
-                }
-            }
-        }
+
+        closeOpenPipes(open, pipe);
 
         pipe.status = PipeStatus.CONNECTED;
 
@@ -135,14 +132,14 @@ public abstract class Pipe {
     }
 
     private static Pipe createPipe(IPCClient ipcClient, HashMap<String, Callback> callbacks, String location) {
-    	
-        String osName = System.getProperty("os.name").toLowerCase();
-
-        if (osName.contains("win")) {
+        if (PlatformUtils.isWindows()) {
             return new WindowsPipe(ipcClient, callbacks, location);
-        } else {
-            throw new RuntimeException("Unsupported OS: " + osName);
         }
+        if (PlatformUtils.isLinux() || PlatformUtils.isMacOS()) {
+            return new UnixPipe(ipcClient, callbacks, location);
+        }
+        throw new IllegalStateException("Unsupported OS: "
+                + PlatformUtils.getOperatingSystem());
     }
 
     public void send(Packet.OpCode op, JsonObject data, Callback callback) {
@@ -182,7 +179,19 @@ public abstract class Pipe {
         this.listener = listener;
     }
 
-    public abstract void close() throws IOException;
+    public final synchronized void close() throws IOException {
+        if (status == PipeStatus.CLOSED) {
+            return;
+        }
+
+        if (status == PipeStatus.CONNECTED) {
+            send(Packet.OpCode.CLOSE, new JsonObject(), null);
+        }
+        status = PipeStatus.CLOSED;
+        closeTransport();
+    }
+
+    protected abstract void closeTransport() throws IOException;
 
     public DiscordBuild getDiscordBuild() {
         return build;
@@ -192,7 +201,7 @@ public abstract class Pipe {
 
     private static String getPipeLocation(int i) {
     	
-        if(System.getProperty("os.name").contains("Win")) {
+        if(PlatformUtils.isWindows()) {
             return "\\\\?\\pipe\\discord-ipc-"+i;
         }
 
@@ -212,5 +221,28 @@ public abstract class Pipe {
         }
         
         return tmppath+"/discord-ipc-"+i;
+    }
+
+    private static void closeQuietly(Pipe pipe) {
+        if (pipe == null) {
+            return;
+        }
+        try {
+            pipe.close();
+        } catch (Exception ignored) {
+        }
+    }
+
+    private static void closeOpenPipes(Pipe[] pipes, Pipe selected) {
+        Set<Pipe> closed = Collections.newSetFromMap(new IdentityHashMap<Pipe, Boolean>());
+        for (Pipe pipe : pipes) {
+            if (pipe != null && pipe != selected && closed.add(pipe)) {
+                try {
+                    pipe.close();
+                } catch (Exception exception) {
+                    LOGGER.debug("Failed to close an unused Discord IPC pipe", exception);
+                }
+            }
+        }
     }
 }

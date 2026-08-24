@@ -1,13 +1,8 @@
 package me.eldodebug.soar.discord.ipc.entities.pipe;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonObject;
-
 import me.eldodebug.soar.discord.ipc.IPCClient;
 import me.eldodebug.soar.discord.ipc.entities.Callback;
 import me.eldodebug.soar.discord.ipc.entities.Packet;
-import me.eldodebug.soar.discord.ipc.entities.serialize.PacketDeserializer;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -54,17 +49,13 @@ public class WindowsPipe extends Pipe {
             return new Packet(Packet.OpCode.CLOSE, null);
         }
 
-        Packet.OpCode op = Packet.OpCode.values()[Integer.reverseBytes(file.readInt())];
-        int len = Integer.reverseBytes(file.readInt());
+        int opcode = Integer.reverseBytes(file.readInt());
+        int len = PacketDecoder.validatePayloadSize(Integer.reverseBytes(file.readInt()));
         byte[] d = new byte[len];
 
         file.readFully(d);
 
-        Gson gson = new GsonBuilder()
-                .registerTypeAdapter(Packet.class, new PacketDeserializer(op))
-                .create();
-        JsonObject jsonObject = gson.fromJson(new String(d), JsonObject.class);
-        Packet p = gson.fromJson(jsonObject, Packet.class);
+        Packet p = PacketDecoder.decode(opcode, d);
 
         LOGGER.debug(String.format("Received packet: %s", p.toString()));
         
@@ -76,10 +67,8 @@ public class WindowsPipe extends Pipe {
     }
 
     @Override
-    public void close() throws IOException {
+    protected void closeTransport() throws IOException {
         LOGGER.debug("Closing IPC pipe...");
-        send(Packet.OpCode.CLOSE, new JsonObject(), null);
-        status = PipeStatus.CLOSED;
         file.close();
     }
 }

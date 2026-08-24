@@ -1,7 +1,6 @@
 package me.eldodebug.soar.gui.modmenu.category.impl;
 
 import java.awt.Color;
-import java.awt.Desktop;
 import java.net.URL;
 
 import me.eldodebug.soar.Glide;
@@ -22,6 +21,7 @@ import me.eldodebug.soar.management.remote.news.News;
 import me.eldodebug.soar.management.remote.news.NewsManager;
 import me.eldodebug.soar.utils.mouse.MouseUtils;
 import me.eldodebug.soar.utils.mouse.Scroll;
+import me.eldodebug.soar.utils.file.FileUtils;
 
 public class HomeCategory extends Category {
 
@@ -144,7 +144,7 @@ public class HomeCategory extends Category {
 		int discordStartY = this.getY() + 179;
 			if(MouseUtils.isInside(mouseX, mouseY, discordStartX + 174 - 60, discordStartY + 60, 52, 18)) {
 				try {
-					Desktop.getDesktop().browse(new URL("https://glideclient.github.io/discord").toURI());
-				} catch (Exception e) {}}
+					FileUtils.openURI(new URL("https://glideclient.github.io/discord").toURI());
+				} catch (Exception ignored) {}}
 	}
 }

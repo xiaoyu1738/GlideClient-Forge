@@ -1,6 +1,7 @@
 package me.eldodebug.soar.management.mods.impl;
 
 import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 
@@ -35,12 +36,25 @@ public class PotionStatusMod extends HUDMod {
 
 	@EventTarget
 	public void onUpdate(EventUpdate event) {
-		
+		Collection<PotionEffect> activePotions;
 		if(this.isEditing() || mc.thePlayer == null) {
-			potions = Arrays.asList(new PotionEffect(1, 0), new PotionEffect(10, 0));
+			activePotions = Arrays.asList(new PotionEffect(1, 0), new PotionEffect(10, 0));
 		}else {
-			potions = mc.thePlayer.getActivePotionEffects();
+			activePotions = mc.thePlayer.getActivePotionEffects();
 		}
+
+		ArrayList<PotionEffect> registeredPotions = new ArrayList<>();
+		for (PotionEffect effect : activePotions) {
+			if (getPotion(effect) != null) {
+				registeredPotions.add(effect);
+			}
+		}
+		potions = registeredPotions;
+	}
+
+	private static Potion getPotion(PotionEffect effect) {
+		int id = effect.getPotionID();
+		return id >= 0 && id < Potion.potionTypes.length ? Potion.potionTypes[id] : null;
 	}
 	
 	@EventTarget
@@ -57,7 +71,10 @@ public class PotionStatusMod extends HUDMod {
 			
             for (PotionEffect potioneffect : potions) {
             	
-                Potion potion = Potion.potionTypes[potioneffect.getPotionID()];
+	                Potion potion = getPotion(potioneffect);
+	                if (potion == null) {
+	                    continue;
+	                }
                 GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
             	mc.getTextureManager().bindTexture(new ResourceLocation("textures/gui/container/inventory.png"));
                 int index = potion.getStatusIconIndex();
@@ -95,7 +112,10 @@ public class PotionStatusMod extends HUDMod {
 			
             for (PotionEffect potioneffect : potions) {
             	
-                Potion potion = Potion.potionTypes[potioneffect.getPotionID()];
+	                Potion potion = getPotion(potioneffect);
+	                if (potion == null) {
+	                    continue;
+	                }
                 
     			String name = I18n.format(potion.getName(), new Object[0]);
     			

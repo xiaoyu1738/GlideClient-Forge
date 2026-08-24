@@ -7,6 +7,7 @@ import me.eldodebug.soar.management.nanovg.NanoVGManager;
 import me.eldodebug.soar.management.nanovg.font.Fonts;
 import me.eldodebug.soar.management.remote.update.Update;
 import me.eldodebug.soar.utils.mouse.MouseUtils;
+import me.eldodebug.soar.utils.file.FileUtils;
 import net.minecraft.client.gui.ScaledResolution;
 import org.lwjgl.input.Keyboard;
 
@@ -73,7 +74,7 @@ public class DiscontinuedSoar8 extends MainMenuScene {
 			int acX = sr.getScaledWidth() / 2 - (acWidth / 2);
 			int acY = sr.getScaledHeight() / 2 - (acHeight / 2);
 			if (MouseUtils.isInside(mouseX, mouseY, acX + acWidth/2 + 5, acY + acHeight - 32, 90, 20)) {
-				try{ Desktop.getDesktop().browse(new URI("https://glideclient.github.io/soar8")); } catch (Exception ignored) {}
+				try{ FileUtils.openURI(new URI("https://glideclient.github.io/soar8")); } catch (Exception ignored) {}
 			}
 			if (MouseUtils.isInside(mouseX, mouseY, acX + acWidth/2 - 95, acY + acHeight - 32, 90, 20)) {
 				exitGui();

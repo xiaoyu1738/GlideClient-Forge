@@ -77,6 +77,10 @@ public class MathUtils {
         bd = bd.setScale(places, RoundingMode.HALF_UP);
         return bd.doubleValue();
     }
+
+    public static boolean isFinite(float value) {
+        return !Float.isNaN(value) && !Float.isInfinite(value);
+    }
     
     public static double abs(double value) {
         return value >= 0.0F ? value : -value;

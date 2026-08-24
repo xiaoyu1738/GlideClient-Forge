@@ -20,7 +20,7 @@ public final class GlideForgeMod {
 
     public static final String MOD_ID = "glideclient";
     public static final String NAME = "Glide Client";
-    public static final String VERSION = "7.2-forge.1";
+    public static final String VERSION = "7.2-forge.2";
 
     private final ForgeEventBridge eventBridge = new ForgeEventBridge();
 
