@@ -22,8 +22,6 @@ public class DiscordRPCMod extends Mod {
 	@Override
 	public void onDisable() {
 		super.onDisable();
-		if(discord.isStarted()) {
-			discord.stop();
-		}
+        discord.stop();
 	}
 }

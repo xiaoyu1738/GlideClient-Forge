@@ -41,9 +41,9 @@ public final class IPCClient implements Closeable {
         }
     }
     
-    public void connect(DiscordBuild... preferredOrder) throws NoDiscordClientException {
+    public synchronized void connect(DiscordBuild... preferredOrder) throws NoDiscordClientException {
     	
-    	if(isConnected(false)) {
+        if (getStatus() == PipeStatus.CONNECTED) {
     		return;
     	}
     	
@@ -68,9 +68,10 @@ public final class IPCClient implements Closeable {
     
     public void sendRichPresence(RichPresence presence, Callback callback) {
     	
-    	if(isConnected(true)) {
-    		return;
-    	}
+        Pipe current = pipe;
+        if (current == null || current.getStatus() != PipeStatus.CONNECTED) {
+            return;
+        }
     	
         LOGGER.debug("Sending RichPresence to discord: "+(presence == null ? null : presence.toJson().toString()));
 
@@ -82,7 +83,7 @@ public final class IPCClient implements Closeable {
         jsonObject.addProperty("cmd", "SET_ACTIVITY");
         jsonObject.add("args", argsObject);
 
-        pipe.send(OpCode.FRAME, jsonObject, callback);
+        current.send(OpCode.FRAME, jsonObject, callback);
     }
 
     public void subscribe(Event sub) {
@@ -91,9 +92,10 @@ public final class IPCClient implements Closeable {
     
     public void subscribe(Event sub, Callback callback) {
     	
-    	if(isConnected(true)) {
-    		return;
-    	}
+        Pipe current = pipe;
+        if (current == null || current.getStatus() != PipeStatus.CONNECTED) {
+            return;
+        }
     	
         if(!sub.isSubscribable()) {
             throw new IllegalStateException("Cannot subscribe to "+sub+" event!");
@@ -104,7 +106,7 @@ public final class IPCClient implements Closeable {
         jsonObject.addProperty("cmd", "SUBSCRIBE");
         jsonObject.addProperty("evt", sub.name());
 
-        pipe.send(OpCode.FRAME, jsonObject, callback);
+        current.send(OpCode.FRAME, jsonObject, callback);
     }
 
     public PipeStatus getStatus() {
@@ -117,14 +119,12 @@ public final class IPCClient implements Closeable {
     }
 
     @Override
-    public void close() {
-    	
-    	if(isConnected(true)) {
-    		return;
-    	}
-    	
+    public synchronized void close() {
+        Pipe current = pipe;
+        if (current == null) return;
         try {
-            pipe.close();
+            // A disconnected transport still needs cleanup; Pipe.close is idempotent.
+            current.close();
         } catch (IOException e) {
             LOGGER.debug("Failed to close pipe", e);
         }
@@ -174,25 +174,12 @@ public final class IPCClient implements Closeable {
         }
     }
 
-    private boolean isConnected(boolean connected) {
-    	
-        if(connected && getStatus() != PipeStatus.CONNECTED) {
-        	return false;
-        }
-
-        if(!connected && getStatus() == PipeStatus.CONNECTED) {
-        	return true;
-        }
-        
-        return false;
-    }
-    
     private void startReading() {
-    	
+        final Pipe readingPipe = pipe;
         readThread = new Thread(() -> {
             try  {
                 Packet p;
-                while((p = pipe.read()).getOp() != OpCode.CLOSE) {
+                while((p = readingPipe.read()).getOp() != OpCode.CLOSE) {
                 	
                     JsonObject json = p.getJson();
 
@@ -264,16 +251,17 @@ public final class IPCClient implements Closeable {
                     }
                 }
                 
-                pipe.setStatus(PipeStatus.DISCONNECTED);
+                if (readingPipe.getStatus() == PipeStatus.CLOSED) return;
+                readingPipe.setStatus(PipeStatus.DISCONNECTED);
                 
                 if(listener != null) {
                     listener.onClose(this, p.getJson());
                 }
             } catch(IOException ex) {
             	
+                if (readingPipe.getStatus() == PipeStatus.CLOSED) return;
                 LOGGER.error("Reading thread encountered an IOException", ex);
-
-                pipe.setStatus(PipeStatus.DISCONNECTED);
+                readingPipe.setStatus(PipeStatus.DISCONNECTED);
                 
                 if(listener != null) {
                     listener.onDisconnect(this, ex);

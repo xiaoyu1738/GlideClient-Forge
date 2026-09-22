@@ -25,7 +25,7 @@ public abstract class Pipe {
 
     private static final Logger LOGGER = LogManager.getLogger(Pipe.class);
     private static final int VERSION = 1;
-    PipeStatus status = PipeStatus.CONNECTING;
+    volatile PipeStatus status = PipeStatus.CONNECTING;
     IPCListener listener;
     private DiscordBuild build;
     final IPCClient ipcClient;
