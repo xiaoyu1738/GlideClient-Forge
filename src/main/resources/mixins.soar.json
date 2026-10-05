@@ -38,6 +38,7 @@
     "item.MixinItemStack",
     "item.MixinRenderItem",
     "layer.MixinLayerArmorBase",
+    "layer.MixinLayerCape",
     "layer.MixinLayerCreeperCharge",
     "layer.MixinLayerDeadmau5Head",
     "layer.MixinLayerHeldItem",

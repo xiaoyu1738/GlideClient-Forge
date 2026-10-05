@@ -1,5 +1,11 @@
 # Changelog
 
+## 7.2-forge.3 - 2026-10-05
+
+- Restored vanilla player cape rendering when Wavey Capes cannot replace it.
+- Limited vanilla cape suppression to cases where the custom cape layer can render.
+- Added startup protection for the custom cape renderer.
+
 ## 7.2-forge.2 - 2026-08-21
 
 - Added a normal Forge 1.8.9 lifecycle and Forge event bridge while retaining

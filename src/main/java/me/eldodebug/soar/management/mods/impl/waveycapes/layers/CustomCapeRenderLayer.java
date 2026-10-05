@@ -36,22 +36,26 @@ public class CustomCapeRenderLayer implements LayerRenderer<AbstractClientPlayer
         }
     }
 
+    public static boolean shouldRender(AbstractClientPlayer player) {
+        WaveyCapesMod mod = WaveyCapesMod.getInstance();
+        return mod != null
+                && mod.isToggled()
+                && !player.isInvisible()
+                && player.hasPlayerInfo()
+                && player.isWearing(EnumPlayerModelParts.CAPE)
+                && player.getLocationCape() != null;
+    }
+
     @Override
     public void doRenderLayer(AbstractClientPlayer abstractClientPlayer, float paramFloat1, float paramFloat2, float deltaTick, float animationTick, float paramFloat5, float paramFloat6, float paramFloat7) {
     	
+        if (!shouldRender(abstractClientPlayer)) {
+            return;
+        }
+
     	WaveyCapesMod mod = WaveyCapesMod.getInstance();
     	ComboSetting movementSetting = mod.getMovementSetting();
     	ComboSetting styleSetting = mod.getStyleSetting();
-    	
-        if(abstractClientPlayer.isInvisible() || !mod.isToggled()) {
-        	return;
-        }
-        
-        if (!abstractClientPlayer.hasPlayerInfo() || abstractClientPlayer.isInvisible()
-                || !abstractClientPlayer.isWearing(EnumPlayerModelParts.CAPE)
-                || abstractClientPlayer.getLocationCape() == null) {
-            return;
-        }
         
         if(movementSetting.getOption().getTranslate().equals(TranslateText.BASIC)) {
         	IMixinEntityPlayer holder = (IMixinEntityPlayer) abstractClientPlayer;
