@@ -1,11 +1,15 @@
 package me.eldodebug.soar.management.mods.impl.waveycapes.layers;
 
+import me.eldodebug.soar.Glide;
 import me.eldodebug.soar.injection.interfaces.IMixinEntityPlayer;
+import me.eldodebug.soar.management.cape.CapeManager;
+import me.eldodebug.soar.management.cape.impl.Cape;
 import me.eldodebug.soar.management.language.TranslateText;
 import me.eldodebug.soar.management.mods.impl.WaveyCapesMod;
 import me.eldodebug.soar.management.mods.impl.waveycapes.sim.StickSimulation;
 import me.eldodebug.soar.management.mods.settings.impl.ComboSetting;
 import me.eldodebug.soar.utils.MathUtils;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.AbstractClientPlayer;
 import net.minecraft.client.model.ModelBase;
 import net.minecraft.client.model.ModelRenderer;
@@ -14,6 +18,7 @@ import net.minecraft.client.renderer.entity.RenderPlayer;
 import net.minecraft.client.renderer.entity.layers.LayerRenderer;
 import net.minecraft.entity.player.EnumPlayerModelParts;
 import net.minecraft.util.MathHelper;
+import net.minecraft.util.ResourceLocation;
 
 public class CustomCapeRenderLayer implements LayerRenderer<AbstractClientPlayer> {
     
@@ -36,14 +41,38 @@ public class CustomCapeRenderLayer implements LayerRenderer<AbstractClientPlayer
         }
     }
 
+    public static boolean hasGlideCape(AbstractClientPlayer player) {
+        Minecraft minecraft = Minecraft.getMinecraft();
+        if (player == null || minecraft.thePlayer != player) {
+            return false;
+        }
+
+        Glide glide = Glide.getInstance();
+        if (glide == null) {
+            return false;
+        }
+
+        CapeManager capeManager = glide.getCapeManager();
+        Cape currentCape = capeManager == null ? null : capeManager.getCurrentCape();
+        return currentCape != null && currentCape.getCape() != null;
+    }
+
+    public static ResourceLocation getCapeLocation(AbstractClientPlayer player) {
+        if (hasGlideCape(player)) {
+            return Glide.getInstance().getCapeManager().getCurrentCape().getCape();
+        }
+
+        return player.getLocationCape();
+    }
+
     public static boolean shouldRender(AbstractClientPlayer player) {
         WaveyCapesMod mod = WaveyCapesMod.getInstance();
+        boolean glideCape = hasGlideCape(player);
         return mod != null
                 && mod.isToggled()
                 && !player.isInvisible()
-                && player.hasPlayerInfo()
-                && player.isWearing(EnumPlayerModelParts.CAPE)
-                && player.getLocationCape() != null;
+                && getCapeLocation(player) != null
+                && (glideCape || (player.hasPlayerInfo() && player.isWearing(EnumPlayerModelParts.CAPE)));
     }
 
     @Override
@@ -62,7 +91,7 @@ public class CustomCapeRenderLayer implements LayerRenderer<AbstractClientPlayer
             holder.glide$updateSimulation(abstractClientPlayer, partCount);
         }
         
-        this.playerRenderer.bindTexture(abstractClientPlayer.getLocationCape());
+        this.playerRenderer.bindTexture(getCapeLocation(abstractClientPlayer));
 
         if (styleSetting.getOption().getTranslate().equals(TranslateText.SMOOTH)) {
             smoothCapeRenderer.renderSmoothCape(this, abstractClientPlayer, deltaTick);

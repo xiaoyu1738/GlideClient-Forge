@@ -1,5 +1,12 @@
 # Changelog
 
+## 7.2-forge.4 - 2026-10-05
+
+- Render Glide-selected capes without requiring the vanilla cape model flag.
+- Keep vanilla cape visibility checks for Mojang-provided capes.
+- Allow the vanilla cape layer to display Glide capes when Wavey Capes is off.
+- Guard cape selection while the local player is still initializing.
+
 ## 7.2-forge.3 - 2026-10-05
 
 - Restored vanilla player cape rendering when Wavey Capes cannot replace it.
