@@ -92,8 +92,6 @@ public class CapeManager {
 		add("Horse", "misc/horse-sample.png", "misc/horse.png", CapeCategory.MISC);
 		add("Trans Arch", "misc/transarch-sample.png", "misc/transarch.png", CapeCategory.MISC);
 
-		currentCape = getCapeByName(InternalSettingsMod.getInstance().getCapeConfigName());
-
 		for(File f : customCapeDir.listFiles()) {
 			
 			if(FileUtils.isImageFile(f)) {
@@ -129,6 +127,8 @@ public class CapeManager {
 				}
 			}
 		}
+
+		reloadFromSettings();
 		
 		for(Cape c : capes) {
 			
@@ -172,6 +172,10 @@ public class CapeManager {
 	
 	public Cape getCurrentCape() {
 		return currentCape;
+	}
+
+	public void reloadFromSettings() {
+		currentCape = getCapeByName(InternalSettingsMod.getInstance().getCapeConfigName());
 	}
 
 	public void setCurrentCape(Cape currentCape) {

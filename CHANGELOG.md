@@ -1,5 +1,11 @@
 # Changelog
 
+## 7.2-forge.5 - 2026-10-06
+
+- Fixed saved Glide cape selections being lost during startup profile loading.
+- Reloaded the selected cape when switching server-specific profiles.
+- Loaded custom cape resources before resolving the configured cape name.
+
 ## 7.2-forge.4 - 2026-10-05
 
 - Render Glide-selected capes without requiring the vanilla cape model flag.

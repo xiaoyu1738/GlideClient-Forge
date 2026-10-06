@@ -14,7 +14,7 @@ JAR，不提供原版 LaunchWrapper 版本或自定义启动器 JSON。尚无 Fo
 
 ## 项目状态
 
-当前候选版本为 `7.2-forge.4`，目标环境如下：
+当前候选版本为 `7.2-forge.5`，目标环境如下：
 
 - Minecraft 1.8.9
 - Forge 11.15.1.2318
@@ -79,7 +79,7 @@ OptiFine、Java、操作系统版本及日志中的第一个相关异常。
 ## 安装
 
 1. 安装 Forge `1.8.9-11.15.1.2318`。
-2. 将 `GlideClient-Forge-7.2-forge.4.jar` 放入该实例的 `mods` 目录。
+2. 将 `GlideClient-Forge-7.2-forge.5.jar` 放入该实例的 `mods` 目录。
 3. 启动普通 Forge 1.8.9 配置。
 
 该 JAR 同时包含剩余 Mixin 所需的早期启动逻辑和常规 `glideclient` Forge
@@ -108,7 +108,7 @@ gradlew.bat clean build --console=plain
 可分发产物位于：
 
 ```text
-build/libs/GlideClient-Forge-7.2-forge.4.jar
+build/libs/GlideClient-Forge-7.2-forge.5.jar
 ```
 
 `./gradlew smokeJar` 会额外生成仅用于自动化测试的控制器 JAR。该文件不得

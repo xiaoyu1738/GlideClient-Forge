@@ -108,9 +108,9 @@ public class Glide {
 			// single runtime provider before discovering or initializing those classes.
 			modManager = new ModManager();
 			modManager.init();
-			capeManager = new CapeManager();
 			colorManager = new ColorManager();
 			profileManager = new ProfileManager();
+			capeManager = new CapeManager();
 
 			modMenu = new GuiModMenu();
 			mainMenu = new GuiGlideMainMenu();

@@ -15,7 +15,7 @@ release of GlideClient, Minecraft, Forge, or OptiFine.
 
 ## Project Status
 
-The current release candidate is `7.2-forge.4`, targeting:
+The current release candidate is `7.2-forge.5`, targeting:
 
 - Minecraft 1.8.9
 - Forge 11.15.1.2318
@@ -79,7 +79,7 @@ versions together with the first relevant exception from the log.
 ## Installation
 
 1. Install Forge `1.8.9-11.15.1.2318`.
-2. Put `GlideClient-Forge-7.2-forge.4.jar` in the instance's `mods` directory.
+2. Put `GlideClient-Forge-7.2-forge.5.jar` in the instance's `mods` directory.
 3. Start the normal Forge 1.8.9 profile.
 
 The JAR contains both the early bootstrap required by the remaining Mixins and
@@ -109,7 +109,7 @@ gradlew.bat clean build --console=plain
 The distributable artifact is written to:
 
 ```text
-build/libs/GlideClient-Forge-7.2-forge.4.jar
+build/libs/GlideClient-Forge-7.2-forge.5.jar
 ```
 
 `./gradlew smokeJar` additionally creates a test-only controller JAR. It must

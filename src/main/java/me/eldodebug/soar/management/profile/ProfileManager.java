@@ -13,6 +13,7 @@ import me.eldodebug.soar.Glide;
 import me.eldodebug.soar.logger.GlideLogger;
 import me.eldodebug.soar.management.color.ColorManager;
 import me.eldodebug.soar.management.color.Theme;
+import me.eldodebug.soar.management.cape.CapeManager;
 import me.eldodebug.soar.management.file.FileManager;
 import me.eldodebug.soar.management.language.Language;
 import me.eldodebug.soar.management.mods.HUDMod;
@@ -346,6 +347,11 @@ public class ProfileManager {
 						}
 					}
 				}
+			}
+
+			CapeManager capeManager = instance.getCapeManager();
+			if (capeManager != null) {
+				capeManager.reloadFromSettings();
 			}
 		} catch (Exception e) {
 			GlideLogger.error("Failed to load profile", e);
