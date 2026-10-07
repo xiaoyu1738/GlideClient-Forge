@@ -27,7 +27,7 @@ apply plugin: 'org.spongepowered.mixin'
 apply plugin: 'java'
 apply plugin: 'com.github.johnrengelman.shadow'
 
-version = "7.2-forge.5"
+version = "7.2-forge.6"
 group = "me.eldodebug"
 archivesBaseName = "GlideClient-Forge"
 

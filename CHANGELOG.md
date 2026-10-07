@@ -1,5 +1,11 @@
 # Changelog
 
+## 7.2-forge.6 - 2026-10-07
+
+- Fixed Wavey Capes rendering Glide-selected capes when the vanilla cape flag is disabled.
+- Preserved vanilla `isWearing(CAPE)` visibility checks for other players.
+- Added null-safe cape texture binding and validated the Forge runtime with Java 8 and Lwjgl3.
+
 ## 7.2-forge.5 - 2026-10-06
 
 - Fixed saved Glide cape selections being lost during startup profile loading.

@@ -35,7 +35,7 @@ public abstract class MixinRenderPlayer  extends RendererLivingEntity<AbstractCl
         super(p_i46156_1_, p_i46156_2_, p_i46156_3_);
     }
     
-    @Inject(method = "<init>*", at = @At("RETURN"))
+    @Inject(method = "<init>(Lnet/minecraft/client/renderer/entity/RenderManager;Z)V", at = @At("RETURN"))
     public void onCreate(CallbackInfo info) {
         headLayer = new HeadLayerFeatureRenderer((RenderPlayer)(Object)this);
         bodyLayer = new BodyLayerFeatureRenderer((RenderPlayer)(Object)this);

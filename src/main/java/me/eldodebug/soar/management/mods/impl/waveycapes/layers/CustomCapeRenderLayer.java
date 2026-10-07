@@ -43,7 +43,12 @@ public class CustomCapeRenderLayer implements LayerRenderer<AbstractClientPlayer
 
     public static boolean hasGlideCape(AbstractClientPlayer player) {
         Minecraft minecraft = Minecraft.getMinecraft();
-        if (player == null || minecraft.thePlayer != player) {
+        if (player == null || minecraft == null || minecraft.thePlayer == null) {
+            return false;
+        }
+
+        if (player != minecraft.thePlayer
+                && !player.getUniqueID().equals(minecraft.thePlayer.getUniqueID())) {
             return false;
         }
 
@@ -58,6 +63,10 @@ public class CustomCapeRenderLayer implements LayerRenderer<AbstractClientPlayer
     }
 
     public static ResourceLocation getCapeLocation(AbstractClientPlayer player) {
+        if (player == null) {
+            return null;
+        }
+
         if (hasGlideCape(player)) {
             return Glide.getInstance().getCapeManager().getCurrentCape().getCape();
         }
@@ -66,13 +75,22 @@ public class CustomCapeRenderLayer implements LayerRenderer<AbstractClientPlayer
     }
 
     public static boolean shouldRender(AbstractClientPlayer player) {
+        if (player == null) {
+            return false;
+        }
+
         WaveyCapesMod mod = WaveyCapesMod.getInstance();
-        boolean glideCape = hasGlideCape(player);
-        return mod != null
-                && mod.isToggled()
-                && !player.isInvisible()
-                && getCapeLocation(player) != null
-                && (glideCape || (player.hasPlayerInfo() && player.isWearing(EnumPlayerModelParts.CAPE)));
+        if (mod == null || !mod.isToggled() || player.isInvisible()) {
+            return false;
+        }
+
+        if (hasGlideCape(player)) {
+            return getCapeLocation(player) != null;
+        }
+
+        return player.hasPlayerInfo()
+                && player.isWearing(EnumPlayerModelParts.CAPE)
+                && player.getLocationCape() != null;
     }
 
     @Override
@@ -91,7 +109,14 @@ public class CustomCapeRenderLayer implements LayerRenderer<AbstractClientPlayer
             holder.glide$updateSimulation(abstractClientPlayer, partCount);
         }
         
-        this.playerRenderer.bindTexture(getCapeLocation(abstractClientPlayer));
+        ResourceLocation capeLocation = getCapeLocation(abstractClientPlayer);
+        if (capeLocation == null) {
+            return;
+        }
+
+        GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
+        GlStateManager.enableTexture2D();
+        this.playerRenderer.bindTexture(capeLocation);
 
         if (styleSetting.getOption().getTranslate().equals(TranslateText.SMOOTH)) {
             smoothCapeRenderer.renderSmoothCape(this, abstractClientPlayer, deltaTick);
